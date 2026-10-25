@@ -228,19 +228,26 @@ async function start() {
     // reload once so the screen runs the new files; not on the very first install.
     const hadWorker = !!navigator.serviceWorker.controller;
     let reloading = false;
+    // not while a field is being typed in
+    const reloadWhenIdle = () => {
+      if (document.activeElement?.matches?.('input,textarea,select')) return setTimeout(reloadWhenIdle, 1500);
+      location.reload();
+    };
     navigator.serviceWorker.addEventListener('controllerchange', () => {
       if (!hadWorker || reloading) return;
       reloading = true;
-      location.reload();
+      reloadWhenIdle();
     });
     navigator.serviceWorker
       .register('./sw.js', { scope: './', updateViaCache: 'none' })
-      .then(reg =>
-        // an installed app is often resumed rather than reopened: look for a new version then too
+      .then(reg => {
+        // look for a new version in the background on every start (browsers don't always check on
+        // their own) and whenever the app comes back to the screen (it is often resumed, not reopened)
+        reg.update().catch(() => {});
         document.addEventListener('visibilitychange', () => {
           if (document.visibilityState === 'visible') reg.update().catch(() => {});
-        }),
-      )
+        });
+      })
       .catch(() => {});
   }
 }

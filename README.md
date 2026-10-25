@@ -261,11 +261,11 @@ if GitHub Pages didn't publish it, another push re-triggers the build.
 
 The service worker opens the app from its cache (cache-first), so opening never waits for the
 network and works offline. Network-first made every open wait for one round trip per file
-(found 2026-10-25), so don't go back to it. How a release reaches a phone: the browser checks
-`sw.js` and `src/version.js` on every open (`updateViaCache: 'none'`) and `src/app.js` asks again
-when the app comes back to the screen. The new version names a new cache, so the new worker
+(found 2026-10-25), so don't go back to it. How a release reaches a phone: `src/app.js` asks the
+browser to check `sw.js` and `src/version.js` on every start and when the app comes back to the
+screen (`updateViaCache: 'none'`). The new version names a new cache, so the new worker
 downloads every file fresh (`?v=` so GitHub's CDN can't hand out an old copy, and
-`cache: 'reload'`) and only takes over once all of them arrived; `src/app.js` then reloads once.
+`cache: 'reload'`) and only takes over once all of them arrived; `src/app.js` then reloads once (not while a field is being typed in).
 The first open after a release still shows the old version for a moment. That is also why every
 shipped change must bump the version: without it, phones keep the old files. It still only creates, reads and deletes caches named
 `rideguide-*` and only handles requests inside `/ride-guide/`, so it stays clean if it ever shares
