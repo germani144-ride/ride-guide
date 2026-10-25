@@ -1,7 +1,7 @@
 // Small DOM helpers and shared pieces of interface. User text only ever goes in via
 // textContent or input values, never as HTML.
 import { calculate, PART_KEYS } from './engine.js';
-import { toEngineInput } from './model.js';
+import { toEngineInput, leasePeriod } from './model.js';
 import { money, plain } from './format.js';
 import { fmt } from './i18n.js';
 
@@ -44,7 +44,10 @@ export const ICONS = {
 
 // Everything the views show about a car, under the user's settings.
 export function evaluate(car, settings) {
-  const out = calculate(toEngineInput(car, { kmPerYear: settings.kmPerYear }), settings);
+  const out = calculate(
+    toEngineInput(car, { kmPerYear: settings.kmPerYear, years: settings.years }),
+    settings,
+  );
   return { ...out, out };
 }
 
@@ -88,29 +91,32 @@ export function priceBlock(r, t, lang, { compact = false } = {}) {
     { class: compact ? 'price compact' : 'price' },
     el(
       'p',
-      { class: 'price-km' },
-      el('span', { class: 'price-num' }, money(r.perKm, lang, 2)),
-      el('span', { class: 'price-unit' }, t.result.perKm),
+      { class: 'price-main' },
+      el('span', { class: 'price-num' }, money(r.perMonth, lang)),
+      el('span', { class: 'price-unit' }, t.result.perMonth),
     ),
     el(
       'p',
-      { class: 'price-month' },
-      el('span', { class: 'price-month-num' }, money(r.perMonth, lang)),
-      ` ${t.result.perMonth}`,
+      { class: 'price-sub' },
+      el('span', { class: 'price-sub-num' }, money(r.perKm, lang, 2)),
+      ` ${t.result.perKm}`,
     ),
   );
 }
 
+// "1 year" or "3 years" (Danish: "1 år", "3 år").
+export function spanText(years, t, lang) {
+  return fmt(years === 1 ? t.result.periodOne : t.result.period, { years: plain(years, lang) });
+}
+
 export function factsList(r, car, t, lang, settings) {
   const kr = t.fields.price[1];
-  const years = plain(r.months / 12, lang);
+  const span = spanText(r.months / 12, t, lang);
   const rows = [
     r.upfront > 0.5 ? [t.result.upfront, `${money(r.upfront, lang)} ${kr}`] : null,
     [t.result.cashOut, `${money(r.paidMonthly, lang)} ${kr}`],
-    [`${t.result.spent} (${fmt(t.result.period, { years })})`, `${money(r.period, lang)} ${kr}`],
-    r.owned && r.residual > 0
-      ? [fmt(t.result.residual, { years }), `${money(r.residual, lang)} ${kr}`]
-      : null,
+    [`${t.result.spent} (${span})`, `${money(r.period, lang)} ${kr}`],
+    r.owned && r.residual > 0 ? [fmt(t.result.residual, { span }), `${money(r.residual, lang)} ${kr}`] : null,
     r.loanLeft > 0.5 ? [t.result.loanLeft, `${money(r.loanLeft, lang)} ${kr}`] : null,
   ].filter(Boolean);
   const list = el(
@@ -122,7 +128,7 @@ export function factsList(r, car, t, lang, settings) {
     'p',
     { class: 'note' },
     fmt(r.owned && settings.buffer > 0 ? t.result.noteOwned : t.result.note, {
-      years,
+      span,
       km: money(settings.kmPerYear, lang),
       rate: plain(settings.returnRate * 100, lang),
       pct: plain(settings.buffer * 100, lang),
@@ -173,8 +179,35 @@ export function spanPicker(ctx) {
 export function kmPicker(ctx) {
   return choiceBar(ctx, 'kmPerYear', KM_CHOICES, ctx.t.compare.km, v => String(v / 1000));
 }
-export function assumptionBars(ctx) {
-  return el('div', { class: 'assumptions' }, spanPicker(ctx), kmPicker(ctx));
+// On a single lease's page the years follow the lease: a fixed lease locks them to its period,
+// a flexible one keeps the bar but says which years it can run.
+export function assumptionBars(ctx, car = null) {
+  const { state, t } = ctx;
+  if (car?.method !== 'lease') return el('div', { class: 'assumptions' }, spanPicker(ctx), kmPicker(ctx));
+  const period = leasePeriod(car, state.settings.years);
+  const span = spanText(period.years, t, state.lang);
+  const yearsBar = period.fixed
+    ? el(
+        'div',
+        { class: 'field span-field' },
+        el('span', { class: 'label' }, t.compare.span),
+        el('p', { class: 'span-locked' }, fmt(t.result.leaseFixedSpan, { span })),
+      )
+    : el(
+        'div',
+        {},
+        spanPicker(ctx),
+        el(
+          'p',
+          { class: 'hint span-hint' },
+          fmt(t.result.leaseFlexSpan, {
+            min: plain(period.min, state.lang),
+            max: plain(period.max, state.lang),
+            span,
+          }),
+        ),
+      );
+  return el('div', { class: 'assumptions' }, yearsBar, kmPicker(ctx));
 }
 
 // ---------- plate ----------

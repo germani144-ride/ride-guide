@@ -12,8 +12,9 @@ import {
   carTitle,
   carSubline,
   assumptionBars,
+  spanText,
 } from '../ui.js';
-import { money, plain } from '../format.js';
+import { money } from '../format.js';
 import { compareResults } from '../compare.js';
 import { answers } from './result.js';
 
@@ -43,8 +44,8 @@ function carRow(ctx, car, { selectable = false } = {}) {
   const figures = el(
     'div',
     { class: 'row-figures' },
-    el('p', { class: 'row-km' }, money(r.perKm, lang, 2), el('span', {}, ` ${t.result.perKm}`)),
-    el('p', { class: 'row-month' }, `${money(r.perMonth, lang)} ${t.result.perMonth}`),
+    el('p', { class: 'row-month' }, money(r.perMonth, lang), el('span', {}, ` ${t.result.perMonth}`)),
+    el('p', { class: 'row-km' }, `${money(r.perKm, lang, 2)} ${t.result.perKm}`),
   );
 
   if (selectable) {
@@ -236,7 +237,7 @@ export function renderCar(ctx, id) {
       ),
     ),
     priceBlock(r, t, lang),
-    assumptionBars(ctx),
+    assumptionBars(ctx, car),
     factsList(r, car, t, lang, state.settings),
     el('h3', {}, t.result.breakdown),
     bar,
@@ -278,12 +279,17 @@ export function renderCompare(ctx, ids) {
         { class: 'facts small' },
         el('div', {}, el('dt', {}, t.result.upfront), el('dd', {}, money(r.upfront, lang))),
         el('div', {}, el('dt', {}, t.result.cashOut), el('dd', {}, money(r.paidMonthly, lang))),
-        el('div', {}, el('dt', {}, `${t.result.spent}`), el('dd', {}, money(r.period, lang))),
+        el(
+          'div',
+          {},
+          el('dt', {}, `${t.result.spent} (${spanText(r.months / 12, t, lang)})`),
+          el('dd', {}, money(r.period, lang)),
+        ),
         r.owned && r.residual > 0
           ? el(
               'div',
               {},
-              el('dt', {}, fmt(t.result.residual, { years: plain(r.months / 12, lang) })),
+              el('dt', {}, fmt(t.result.residual, { span: spanText(r.months / 12, t, lang) })),
               el('dd', {}, money(r.residual, lang)),
             )
           : null,

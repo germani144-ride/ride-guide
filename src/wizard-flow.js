@@ -82,17 +82,34 @@ export function stepFields(step, car) {
 // The switches a step shows; flipping one changes which fields are asked.
 export function stepSwitches(step, car) {
   const lease = car.method === 'lease';
-  if (step === 'cost') return lease ? ['serviceIncluded', 'tyresIncluded'] : ['depreciationAuto'];
+  if (step === 'cost')
+    return lease ? ['leaseFixed', 'serviceIncluded', 'tyresIncluded'] : ['depreciationAuto'];
   if (step === 'running' && !(lease && switchOn(car, 'serviceIncluded'))) return ['maintenanceAuto'];
   return [];
 }
 
-// Order of a number step: its fields, then its switches, then the manual loss-in-value field,
-// which belongs under the switch that reveals it.
-export function stepLayout(step, car) {
+// What a number step shows, in order: { field } or { switch } items. A switch comes right
+// before the fields it reveals (the lease period, the manual loss in value).
+export function stepItems(step, car) {
   const fields = stepFields(step, car);
-  const after = step === 'cost' && fields.includes('depreciationFactor') ? ['depreciationFactor'] : [];
-  return { fields, before: fields.filter(f => !after.includes(f)), switches: stepSwitches(step, car), after };
+  const asked = keys => keys.filter(k => fields.includes(k)).map(field => ({ field }));
+  if (step === 'cost' && car.method === 'lease') {
+    return [
+      ...asked(['leaseMo', 'oneTimePayment', 'returnFee']),
+      { switch: 'leaseFixed' },
+      ...asked(['yearsOfUse', 'leaseMinYears', 'leaseMaxYears']),
+      { switch: 'serviceIncluded' },
+      { switch: 'tyresIncluded' },
+    ];
+  }
+  if (step === 'cost') {
+    return [
+      ...asked(fields.filter(f => f !== 'depreciationFactor')),
+      { switch: 'depreciationAuto' },
+      ...asked(['depreciationFactor']),
+    ];
+  }
+  return [...fields.map(field => ({ field })), ...stepSwitches(step, car).map(key => ({ switch: key }))];
 }
 
 // Which label a field uses: electric cars count energy in kWh, and a lease asks its period.

@@ -11,7 +11,7 @@ import {
   choosePaymentMethod,
   stepFields,
   stepSwitches,
-  stepLayout,
+  stepItems,
   labelKey,
 } from '../src/wizard-flow.js';
 import { newCar } from '../src/model.js';
@@ -65,18 +65,32 @@ test('each step asks its fields and switches, in order', () => {
   assert.deepEqual(stepFields('driving', cash), ['kmPerUnit']);
   assert.deepEqual(stepFields('method', cash), []);
   assert.deepEqual(stepSwitches('cost', cash), ['depreciationAuto']);
-  assert.deepEqual(stepSwitches('cost', lease), ['serviceIncluded', 'tyresIncluded']);
+  assert.deepEqual(stepSwitches('cost', lease), ['leaseFixed', 'serviceIncluded', 'tyresIncluded']);
   assert.deepEqual(stepSwitches('running', cash), ['maintenanceAuto']);
   assert.deepEqual(stepSwitches('running', lease), [], 'service included: no maintenance switch');
   assert.deepEqual(stepSwitches('running', { ...lease, serviceIncluded: false }), ['maintenanceAuto']);
-  // The manual loss in value comes after the switch that reveals it.
-  assert.deepEqual(stepLayout('cost', { ...cash, depreciationAuto: false }), {
-    fields: ['price', 'depreciationFactor'],
-    before: ['price'],
-    switches: ['depreciationAuto'],
-    after: ['depreciationFactor'],
-  });
-  assert.deepEqual(stepLayout('cost', lease).after, []);
+  // A switch comes right before the fields it reveals.
+  assert.deepEqual(stepItems('cost', { ...cash, depreciationAuto: false }), [
+    { field: 'price' },
+    { switch: 'depreciationAuto' },
+    { field: 'depreciationFactor' },
+  ]);
+  assert.deepEqual(stepItems('cost', lease), [
+    { field: 'leaseMo' },
+    { field: 'oneTimePayment' },
+    { field: 'returnFee' },
+    { switch: 'leaseFixed' },
+    { field: 'yearsOfUse' },
+    { switch: 'serviceIncluded' },
+    { switch: 'tyresIncluded' },
+  ]);
+  assert.deepEqual(
+    stepItems('cost', { ...lease, leaseFixed: false })
+      .filter(i => i.field)
+      .map(i => i.field),
+    ['leaseMo', 'oneTimePayment', 'returnFee', 'leaseMinYears', 'leaseMaxYears'],
+  );
+  assert.deepEqual(stepItems('running', cash).at(-1), { switch: 'maintenanceAuto' });
 });
 
 test('labels depend on the fuel and the payment method', () => {

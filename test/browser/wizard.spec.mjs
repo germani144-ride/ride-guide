@@ -27,8 +27,8 @@ test('add a car through the wizard and save it as my car', async ({ page, app })
   await page.getByRole('button', { name: 'Next' }).click();
 
   await expect(page.getByRole('heading', { name: 'Here is what it costs' })).toBeVisible();
-  await expect(page.locator('.price-num')).toHaveText('7.04');
-  await expect(page.locator('.price-month-num')).toHaveText('5,863');
+  await expect(page.locator('.price-num')).toHaveText('5,863');
+  await expect(page.locator('.price-sub-num')).toHaveText('7.04');
   await expect(page.locator('.facts').first()).toContainText('250,000 kr');
 
   await page.getByRole('button', { name: 'Save as my car' }).click();
@@ -66,5 +66,53 @@ test('a lease asks its own terms and switches', async ({ page, app }) => {
   // With service in the lease, maintenance is not asked.
   await expect(page.locator('#s-maintenanceAuto')).toHaveCount(0);
   await page.getByRole('button', { name: 'Next' }).click();
-  await expect(page.locator('.price-num')).toHaveText('5.00');
+  await expect(page.locator('.price-sub-num')).toHaveText('5.00');
+});
+
+test('a fixed lease keeps its own period and its full one-time payment', async ({ page, app }) => {
+  await app.open('#/history');
+  await page.locator('.span-field').nth(0).getByRole('radio', { name: '1', exact: true }).click();
+  await page.locator('.row', { hasText: 'Y GM' }).click();
+  // The years bar is replaced by the lease's own period.
+  await expect(page.locator('.span-locked')).toHaveText('Fixed by the lease: 3 years');
+  const facts = page.locator('.facts').first();
+  await expect(facts).toContainText('Paid up front11,500 kr');
+  await expect(facts).toContainText('Total (3 years)');
+});
+
+test('a flexible lease asks its shortest and longest period and stays within them', async ({ page, app }) => {
+  await app.open('#/new');
+  await page.getByRole('button', { name: /Not yet/ }).click();
+  await page.locator('#f-name').fill('Subscription Car');
+  await page.getByRole('button', { name: 'Next' }).click();
+  await page.getByRole('button', { name: /^Lease/ }).click();
+  await page.locator('#f-leaseMo').fill('4000');
+  await page.locator('#f-oneTimePayment').fill('5000');
+  await expect(page.locator('#f-yearsOfUse')).toBeVisible();
+  await page.locator('label[for="s-leaseFixed"]').click();
+  await expect(page.locator('#f-yearsOfUse')).toHaveCount(0);
+  await page.locator('#f-leaseMinYears').fill('2');
+  await page.locator('#f-leaseMaxYears').fill('1');
+  await page.getByRole('button', { name: 'Next' }).click();
+  await expect(page.locator('#err-leaseMaxYears')).toHaveText(
+    'The longest period must be at least the shortest.',
+  );
+  await page.locator('#f-leaseMinYears').fill('1');
+  await page.locator('#f-leaseMaxYears').fill('2');
+  await page.getByRole('button', { name: 'Next' }).click();
+  await page.locator('#f-kmPerUnit').fill('6');
+  await page.getByRole('button', { name: 'Next' }).click();
+  await page.getByRole('button', { name: 'Next' }).click();
+
+  // Years of ownership is 3 by default; this lease can only run up to 2.
+  await expect(page.locator('.span-hint')).toHaveText(
+    'This lease can run 1–2 years, so it is shown for 2 years.',
+  );
+  await expect(page.locator('.facts').first()).toContainText('Paid up front5,000 kr');
+  await expect(page.locator('.facts').first()).toContainText('Total (2 years)');
+  await page.locator('.span-field').nth(0).getByRole('radio', { name: '1', exact: true }).click();
+  await expect(page.locator('.span-hint')).toHaveText(
+    'This lease can run 1–2 years, so it is shown for 1 year.',
+  );
+  await expect(page.locator('.facts').first()).toContainText('Paid up front5,000 kr');
 });

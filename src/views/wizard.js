@@ -9,7 +9,8 @@ import {
   nextStep,
   stepAfterPlateAnswer,
   choosePaymentMethod,
-  stepLayout,
+  stepFields,
+  stepItems,
   labelKey,
 } from '../wizard-flow.js';
 import { fmt } from '../i18n.js';
@@ -126,7 +127,7 @@ function renderForm(ctx, draft, advance) {
   const { state, t } = ctx;
   const { step, car } = draft;
   const lang = state.lang;
-  const { fields, before, switches, after } = stepLayout(step, car);
+  const fields = stepFields(step, car);
   const form = el('form', { class: 'form', novalidate: true });
   form.append(el('h2', {}, step === 'cost' ? t.steps.cost[car.method] : t.steps[step].title));
   const hint = ['plateEntry', 'running', 'driving'].includes(step) ? t.steps[step].hint : null;
@@ -176,10 +177,13 @@ function renderForm(ctx, draft, advance) {
   }
 
   if (['cost', 'driving', 'running'].includes(step)) {
-    for (const f of before)
-      form.append(numberField(f, car, t, lang, ctx, errorNodes, { label: labelKey(f, car) }));
-    for (const key of switches) form.append(switchField(key, car, t, ctx));
-    for (const f of after) form.append(numberField(f, car, t, lang, ctx, errorNodes));
+    for (const item of stepItems(step, car)) {
+      form.append(
+        item.switch
+          ? switchField(item.switch, car, t, ctx)
+          : numberField(item.field, car, t, lang, ctx, errorNodes, { label: labelKey(item.field, car) }),
+      );
+    }
   }
 
   if (hint) form.append(el('p', { class: 'hint step-hint' }, hint));

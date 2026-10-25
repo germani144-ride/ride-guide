@@ -114,21 +114,26 @@ test('finance at 0% beats cash once your money earns a return', () => {
   assert.ok(fin.parts.capital < cash.parts.capital);
 });
 
-test('lease renews to fill the time span, a partial last lease pro rata', () => {
+test('a lease runs once over its own period: one-time payment at the start, return fee at the end', () => {
   const car = {
     ...noRunning,
     method: 'lease',
     leaseMo: 3000,
     oneTimePayment: 12000,
     returnFee: 1200,
-    leaseYears: 2,
     serviceIncluded: true,
   };
-  const out = calculate(car, { ...bare, years: 3 });
-  // 36 months of 3000, one-time 12000 + 6000, return fee 1200 + 600
-  near(out.perMonth, (36 * 3000 + 18000 + 1800) / 36, 1e-6, 'per month');
+  // Its own period (2 years) wins over the years of ownership (3); no renewal, no pro rata.
+  const out = calculate({ ...car, years: 2 }, { ...bare, years: 3 });
+  assert.equal(out.months, 24);
+  near(out.perMonth, (24 * 3000 + 12000 + 1200) / 24, 1e-6, 'per month');
   assert.equal(out.upfront, 12000);
   assert.equal(out.parts.buffer, 0, 'no margin on leases');
+  // Without its own period it follows the years of ownership.
+  assert.equal(calculate(car, { ...bare, years: 3 }).months, 36);
+  // When money earns a return, a payment up front costs more than the same money spread out.
+  const discounted = calculate({ ...car, years: 2 }, { ...bare, returnRate: 0.04, years: 3 });
+  assert.ok(discounted.parts.lease > out.parts.lease);
 });
 
 test('maintenance rises with age and is skipped when the lease includes service', () => {
@@ -143,10 +148,7 @@ test('maintenance rises with age and is skipped when the lease includes service'
     1e-6,
     'average over the first year',
   );
-  const lease = calculate(
-    { ...base, kmPerUnit: 0, method: 'lease', leaseMo: 1, leaseYears: 1, serviceIncluded: true },
-    s,
-  );
+  const lease = calculate({ ...base, kmPerUnit: 0, method: 'lease', leaseMo: 1, serviceIncluded: true }, s);
   assert.equal(lease.parts.maintenance, 0);
 });
 
@@ -160,22 +162,14 @@ test('tyres per km, plus swaps for winter tyres; included tyres cost nothing', (
     1e-9,
     'plus 600 a year',
   );
-  assert.equal(
-    calculate({ ...car, method: 'lease', leaseMo: 1, leaseYears: 1, tyresIncluded: true }, s).parts.tyres,
-    0,
-  );
+  assert.equal(calculate({ ...car, method: 'lease', leaseMo: 1, tyresIncluded: true }, s).parts.tyres, 0);
 });
 
 test('inspection at 4 years, then every 2; skipped when the lease includes service', () => {
   const s = { ...bare, years: 4, inspectionPrice: 480 };
   const car = { ...noRunning, method: 'cash', price: 0, age: 3 };
   near(calculate(car, s).parts.other, (2 * 480) / 48, 1e-9, 'inspections at age 4 and 6');
-  near(
-    calculate({ ...car, method: 'lease', leaseMo: 1, leaseYears: 4 }, s).parts.other,
-    0,
-    1e-9,
-    'lease with service',
-  );
+  near(calculate({ ...car, method: 'lease', leaseMo: 1 }, s).parts.other, 0, 1e-9, 'lease with service');
 });
 
 test('electric energy mixes home and public charging, with extra use in the cold', () => {
@@ -196,7 +190,7 @@ test('insurance on an owned car follows its value down; on a lease it stays', ()
   const s = { ...bare, years: 5 };
   const own = calculate({ ...noRunning, method: 'cash', price: 300000, insuranceMo: 600 }, s);
   assert.ok(own.parts.insurance < 600 && own.parts.insurance > 300);
-  const lease = calculate({ ...noRunning, method: 'lease', leaseMo: 1, leaseYears: 5, insuranceMo: 600 }, s);
+  const lease = calculate({ ...noRunning, method: 'lease', leaseMo: 1, insuranceMo: 600 }, s);
   near(lease.parts.insurance, 600, 1e-9, 'lease');
 });
 

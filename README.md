@@ -1,6 +1,6 @@
 # RideGuide
 
-What will this car really cost you? Lease, buy cash, or finance, per month and per km.
+What will this car really cost you? Lease, buy cash, or finance, per month (and per km).
 Built from the `car_comparison` tab in my `life_sheet.xlsx`, as an installable offline web app.
 
 Live: https://germani144-ride.github.io/ride-guide/ (open on the phone and choose **Install**). It has its
@@ -19,13 +19,15 @@ The app has three tabs:
   4. The terms for that choice:
      - pay upfront: price; loss in value is estimated (switch it off to type your own yearly rate)
      - finance: price, down payment (below 100%), ÅOP, loan period; loss in value as above
-     - lease: monthly lease, one-time payment, return fee, lease period, and switches for
-       "service included" (default on) and "tyres included" (default off)
+     - lease: monthly lease, one-time payment, return fee; whether the period is fixed (default)
+       with its lease period, or flexible (a lease you can end early, such as a car
+       subscription) with its shortest and longest period; and switches for "service included"
+       (default on) and "tyres included" (default off)
   5. Fuel: fuel or energy use. Prices are shared by every car (Settings).
   6. Running costs: insurance and parking per month, green tax per half year (as on the bill;
      the app divides it by 6); maintenance is estimated
      (switch it off to type your own; not asked when the lease includes service).
-  7. The result: kr per km, cost per month, where the money goes, for the shared years of
+  7. The result: cost per month (the big number), kr per km, where the money goes, for the shared years of
      ownership and km per year (two bars right there). Save it as **my car** or just to **history**. Any answer
      can be changed from the result screen.
 - **Garage** shows the cars you marked as yours.
@@ -34,7 +36,9 @@ The app has three tabs:
 Years of ownership (default 3) and km per year (default 10,000) are the same for every car, so
 cars are always compared on equal terms. Two bars at the top of Garage, History, the comparison,
 a car's page and the result change them for all cars at once (also in Settings). A car only stores
-its own fuel use; a lease keeps its own lease period.
+its own fuel use. A lease runs its own period: a fixed lease always its lease period (on its page
+the years bar is replaced by "Fixed by the lease: 3 years"), a flexible lease the years of
+ownership kept within its shortest and longest period.
 
 On a car's page you can mark it as yours, edit it, **try another way to pay** (same car,
 new payment method, so lease vs. finance is two taps away), compare it, or delete it.
@@ -81,8 +85,10 @@ Opening `index.html` straight from disk does not work, because ES modules need a
 `src/engine.js` simulates each car month by month over one **shared time span** (years of
 ownership, default 3) at one **shared km per year** (default 10,000), so every car is compared
 on the same terms. Owned cars are sold at the end
-at their estimated value (any loan left is paid off from the sale). Leases renew on the same terms
-until the span is filled; a partial last lease counts pro rata.
+at their estimated value (any loan left is paid off from the sale). A lease runs once, over its own
+period (`leasePeriod()` in `src/model.js`): a fixed lease its lease period, a flexible lease the
+years of ownership within its shortest and longest period. The one-time payment and the return
+fee are always paid in full.
 
 Every payment is **discounted** at the return your money could earn (default 4% a year,
 compounding monthly). That counts the money tied up in a car and makes a big payment now
@@ -95,7 +101,7 @@ All prices are in today's money.
 | Loss in value | price − value at the end, spread evenly per month. Value curve: −20% in the first year, then a yearly loss that shrinks with age: 6% + 9% × e^(−(age − 1) ÷ 4), so 15% in the second year, about 9% at 5 years and about 6–7% for cars over 10 (electric: −22%, then 7% + 10% × the same). The yearly rate goes up 1 point per 5,000 km above 15,000 km a year, and down when you drive less (limits 3–30%). Checked against TjekBil's market values for a 2016 car. A used car continues from its age (model year). Manual mode: value = price ÷ (1 + yearly rate)^years. |
 | Money tied up in the car | equivalent monthly cost of (down payment + instalments + loan left at the end − sale value) at the return rate, minus loss in value and interest. Negative ("saved by paying later") when a cheap loan beats paying cash. |
 | Loan interest | interest paid within the span, spread per month. Instalments follow PMT(ÅOP ÷ 12, loan period, loan). |
-| Lease | monthly lease + one-time payment at each start + return fee at each end, discounted. |
+| Lease | monthly lease + the one-time payment at the start + the return fee at the end, over the lease's own period, discounted. |
 | Fuel / power | km per month ÷ km per unit × price, growing by the yearly price change. Prices are settings shared by every car: petrol 17.50 and diesel 19.50 kr per litre (October 2026), electricity 1.40 kr per kWh at home and 3.50 at public chargers (FDM 2026). Electric: 80% home + 20% public, and 10% extra use in the cold. |
 | Insurance | today's premium; on owned cars half of it follows the car's value down. |
 | Maintenance and repairs | (yearly base + per km × km a year) ÷ 12 × (1 + 8% × age), age up to 15. Petrol 3,000 kr + 0.25 kr/km, diesel 3,500 kr + 0.25 kr/km, electric 2,000 kr + 0.15 kr/km. Skipped when the lease includes service. |
@@ -106,7 +112,7 @@ All prices are in today's money.
 | Safety margin | owned cars only: 5% on top of everything else. |
 
 Results: **kr per km** = cost per month ÷ km per month. **Total** = cost per month × months.
-**Paid up front** = down payment (cash: the price) or the first one-time lease payment.
+**Paid up front** = down payment (cash: the price) or the lease's one-time payment.
 **Paid out per month** = plain average of everything paid after the start (instalments, lease,
 running costs), without discounting or the sale.
 
@@ -204,7 +210,7 @@ same `load()` and `save()`. When the shape of saved data changes, `STATE_VERSION
 ### Tests
 
 - Unit tests (`npm test`, Node's built-in runner):
-  - `test/cost.test.mjs`: the cost engine: value curve, money tied up, finance, lease renewal,
+  - `test/cost.test.mjs`: the cost engine: value curve, money tied up, finance, the lease period,
     maintenance, tyres, inspection, electricity, insurance, safety margin, and that the defaults
     stay near FDM's 2026 budget.
   - `test/engine.test.mjs`: sheet mode against the spreadsheet: the seven current columns in

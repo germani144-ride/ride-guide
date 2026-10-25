@@ -1,8 +1,8 @@
 // RideGuide cost engine.
-// Simulates a car month by month over one shared time span, so lease, cash and finance are
-// compared over the same period. Every payment is discounted at the return your money could
-// earn (compounding), which both counts the money tied up in a car and makes a big payment
-// now comparable with small payments later. The result is the equivalent fixed monthly cost.
+// Simulates a car month by month over the years of ownership (a lease over its own period, see
+// leasePeriod() in model.js), so lease, cash and finance are compared on equal terms. Every
+// payment is discounted at the return your money could earn (compounding), which both counts the
+// money tied up in a car and makes a big payment now comparable with small payments later. The result is the equivalent fixed monthly cost.
 //
 // Pure functions only: no DOM, no storage, no network. Safe to run in a browser, Node, or a
 // future backend without changes. The spreadsheet's formulas live on in engine-sheet.js.
@@ -89,9 +89,10 @@ export const PART_KEYS = [
  * @property {boolean} depreciationAuto use the value curve; otherwise depreciationFactor
  * @property {number} depreciationFactor yearly loss for the manual mode: value = price / (1+f)^years
  * @property {number} leaseMo
- * @property {number} oneTimePayment   paid at the start of each lease
- * @property {number} returnFee        paid at the end of each lease
- * @property {number} leaseYears       lease period; leases renew to fill the time span
+ * @property {number} oneTimePayment   paid when the lease starts
+ * @property {number} returnFee        paid when the car is handed back, at the end
+ * @property {number} [years]          this car's own period, overriding settings.years (a lease
+ *                                     runs for its own period; see leasePeriod() in model.js)
  * @property {boolean} serviceIncluded lease covers maintenance and inspection
  * @property {boolean} tyresIncluded   lease covers tyres
  * @property {number} kmPerYear
@@ -147,7 +148,7 @@ function inspectionsBy(age) {
  */
 export function calculate(input, settings = {}) {
   const s = { ...DEFAULT_SETTINGS, ...settings };
-  const months = Math.max(1, Math.round(num(s.years) * 12));
+  const months = Math.max(1, Math.round(num(input.years ?? s.years) * 12));
   const rm = Math.pow(1 + num(s.returnRate), 1 / 12) - 1; // monthly rate, compounding
   const disc = k => Math.pow(1 + rm, -k);
   let annuity = 0; // value today of 1 kr paid at the end of every month
@@ -205,17 +206,11 @@ export function calculate(input, settings = {}) {
     capitalPv += (loanLeft - residual) * disc(months);
   }
 
-  // ----- leasing: renews to fill the time span; a last partial lease counts pro rata -----
+  // ----- leasing: one lease over the period; one-time payment at the start, return fee at the end -----
   let leaseFirst = 0;
   if (lease) {
-    const L = Math.max(1, Math.round(num(input.leaseYears) * 12));
-    for (let start = 0; start < months; start += L) {
-      const share = Math.min(L, months - start) / L;
-      const oneTime = num(input.oneTimePayment) * share;
-      if (start === 0) leaseFirst = oneTime;
-      else add('lease', oneTime, start);
-      add('lease', num(input.returnFee) * share, Math.min(start + L, months));
-    }
+    leaseFirst = num(input.oneTimePayment);
+    add('lease', num(input.returnFee), months);
     upfront = leaseFirst;
   }
 

@@ -43,7 +43,7 @@ export function renderResult(ctx, draft) {
       el('p', { class: 'result-name' }, carTitle(car, t)),
     ),
     priceBlock(r, t, lang),
-    assumptionBars(ctx),
+    assumptionBars(ctx, car),
     factsList(r, car, t, lang, state.settings),
     el('h3', {}, t.result.breakdown),
     bar,
@@ -100,7 +100,10 @@ export function answers(car, t, lang, onChange) {
       [
         el('div', {}, el('dt', {}, t.result.methodLabel), el('dd', {}, t.steps.method[car.method][0])),
         ...costFields(car).map(row),
-        ...(car.method === 'lease' ? ['serviceIncluded', 'tyresIncluded'] : ['depreciationAuto']).map(flag),
+        ...(car.method === 'lease'
+          ? ['leaseFixed', 'serviceIncluded', 'tyresIncluded']
+          : ['depreciationAuto']
+        ).map(flag),
       ],
     ],
     ['driving', 'driving', DRIVING_FIELDS.map(row)],

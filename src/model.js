@@ -4,7 +4,7 @@ import { DEFAULT_SETTINGS } from './engine.js';
 // A saved car keeps every number it has ever been given, so switching payment method and back
 // loses nothing. toEngineInput() decides which numbers count for the chosen method.
 
-export const STATE_VERSION = 6;
+export const STATE_VERSION = 7;
 export const METHODS = ['cash', 'finance', 'lease'];
 export const FUELS = ['petrol', 'diesel', 'electric'];
 
@@ -25,6 +25,8 @@ export const NUMBER_FIELDS = [
   'leaseMo',
   'oneTimePayment',
   'returnFee',
+  'leaseMinYears',
+  'leaseMaxYears',
   'kmPerYear',
   'kmPerUnit',
   'pricePerUnit',
@@ -35,12 +37,13 @@ export const NUMBER_FIELDS = [
 ];
 
 // On/off switches on a car, with their defaults: estimate the loss in value and maintenance;
-// a lease includes service but not tyres.
+// a lease includes service but not tyres, and runs for a fixed period.
 export const SWITCH_DEFAULTS = {
   depreciationAuto: true,
   maintenanceAuto: true,
   serviceIncluded: true,
   tyresIncluded: false,
+  leaseFixed: true,
 };
 export const BOOL_FIELDS = Object.keys(SWITCH_DEFAULTS);
 
@@ -54,7 +57,7 @@ export function switchOn(car, key) {
 export const COST_FIELDS = {
   cash: ['price'],
   finance: ['price', 'downPayment', 'apr', 'financeMonths'],
-  lease: ['leaseMo', 'oneTimePayment', 'returnFee', 'yearsOfUse'],
+  lease: ['leaseMo', 'oneTimePayment', 'returnFee'],
 };
 // Km per year, years of ownership and fuel and electricity prices are shared by all cars
 // (Settings, and the bars on History and Comparison), so a car only stores its consumption.
@@ -65,7 +68,20 @@ export const RUNNING_FIELDS = ['insuranceMo', 'greenTaxMo', 'maintenanceMo', 'pa
 export function costFields(car) {
   const f = [...COST_FIELDS[car.method]];
   if (car.method !== 'lease' && !switchOn(car, 'depreciationAuto')) f.push('depreciationFactor');
+  if (car.method === 'lease')
+    f.push(...(switchOn(car, 'leaseFixed') ? ['yearsOfUse'] : ['leaseMinYears', 'leaseMaxYears']));
   return f;
+}
+
+// How long a lease runs when costed. A fixed lease always runs its own period (`yearsOfUse`),
+// whatever the years of ownership are set to. A flexible lease (one you can end early, such as a
+// car subscription) follows the years of ownership, within its shortest and longest period.
+export function leasePeriod(car, years) {
+  if (switchOn(car, 'leaseFixed')) return { years: car.yearsOfUse, fixed: true, limited: false };
+  const min = car.leaseMinYears;
+  const max = Math.max(min, car.leaseMaxYears);
+  const used = Math.min(max, Math.max(min, years));
+  return { years: used, fixed: false, min, max, limited: used !== years };
 }
 export function runningFields(car) {
   return RUNNING_FIELDS.filter(
@@ -110,6 +126,8 @@ export function newCar(overrides = {}) {
     leaseMo: 0,
     oneTimePayment: 0,
     returnFee: 0,
+    leaseMinYears: 1,
+    leaseMaxYears: 3,
     kmPerYear: 0,
     kmPerUnit: 0,
     pricePerUnit: ENERGY_DEFAULTS.petrol,
@@ -159,10 +177,15 @@ export function sanitizeCar(raw) {
 // used for the car's age.
 export function toEngineInput(
   car,
-  { year = new Date().getFullYear(), kmPerYear = DEFAULT_SETTINGS.kmPerYear } = {},
+  {
+    year = new Date().getFullYear(),
+    kmPerYear = DEFAULT_SETTINGS.kmPerYear,
+    years = DEFAULT_SETTINGS.years,
+  } = {},
 ) {
   const lease = car.method === 'lease';
   return {
+    ...(lease ? { years: leasePeriod(car, years).years } : {}), // owned cars use the years of ownership
     method: car.method,
     fuel: car.fuel,
     age: car.year > 1900 ? Math.max(0, year - car.year) : 0,
@@ -175,7 +198,6 @@ export function toEngineInput(
     leaseMo: lease ? car.leaseMo : 0,
     oneTimePayment: lease ? car.oneTimePayment : 0,
     returnFee: lease ? car.returnFee : 0,
-    leaseYears: lease ? car.yearsOfUse : 0,
     serviceIncluded: switchOn(car, 'serviceIncluded'),
     tyresIncluded: switchOn(car, 'tyresIncluded'),
     kmPerYear,
@@ -223,6 +245,8 @@ export function migrate(raw, fallbackLang = 'en') {
     if (raw.settings?.petrolPrice === 13.69) state.settings.petrolPrice = DEFAULT_SETTINGS.petrolPrice;
     if (raw.settings?.dieselPrice === 13.29) state.settings.dieselPrice = DEFAULT_SETTINGS.dieselPrice;
   }
+  // v7: leases are fixed (their own period) or flexible (shortest and longest period). Older
+  // leases had one period, so they become fixed; sanitizeCar() fills in the new fields.
   state.cars = raw.cars.slice(0, 500).map(sanitizeCar);
   if (raw.version === STATE_VERSION && raw.draft && typeof raw.draft === 'object' && raw.draft.car) {
     state.draft = { ...raw.draft, car: sanitizeCar(raw.draft.car) };
@@ -265,7 +289,10 @@ export function validate(car, fields) {
     if (f === 'name' && !car.name.trim()) errors.name = 'required';
     if (f === 'plate' && !car.plate.trim()) errors.plate = 'required';
     if (['price', 'leaseMo', 'kmPerUnit'].includes(f)) positive(f);
-    if (f === 'yearsOfUse' && car.method === 'lease') positive(f);
+    if (['yearsOfUse', 'leaseMinYears', 'leaseMaxYears'].includes(f) && car.method === 'lease') positive(f);
+    if (f === 'leaseMaxYears' && !errors.leaseMaxYears && car.leaseMaxYears < car.leaseMinYears) {
+      errors.leaseMaxYears = 'maxBelowMin';
+    }
     if (f === 'apr' && car.method === 'finance') positive(f);
     if (f === 'financeMonths' && car.method === 'finance') positive(f);
     if (f === 'downPayment' && car.method === 'finance' && !(car.downPayment >= 0 && car.downPayment < 1)) {

@@ -16,6 +16,7 @@ import {
   STATE_VERSION,
   toShown,
   fromShown,
+  leasePeriod,
 } from '../src/model.js';
 import { SEED_CARS } from '../src/seed.js';
 
@@ -58,12 +59,12 @@ test('fields of other methods do not count', () => {
   const lease = toEngineInput(car);
   assert.equal(lease.price, 0);
   assert.equal(lease.financeMonths, 0);
-  assert.equal(lease.leaseYears, 3);
+  assert.equal(lease.years, 3, 'a fixed lease runs its own period');
   const cash = toEngineInput({ ...car, method: 'cash' });
   assert.equal(cash.leaseMo, 0);
   assert.equal(cash.downPayment, 1);
   assert.equal(cash.price, 300000);
-  assert.equal(cash.leaseYears, 0);
+  assert.equal(cash.years, undefined, 'owned cars follow the years of ownership');
   const fin = toEngineInput({ ...car, method: 'finance' });
   assert.equal(fin.apr, 0.05);
   assert.equal(fin.leaseMo, 0);
@@ -235,4 +236,54 @@ test('every file the app loads is in the offline cache list (SHELL in sw.js)', a
     linked,
     [...shell].filter(f => f.startsWith('css/')),
   );
+});
+
+test('a fixed lease runs its own period; a flexible one follows the years within its limits', () => {
+  const fixed = newCar({ method: 'lease', leaseMo: 3000, yearsOfUse: 3 });
+  assert.deepEqual(leasePeriod(fixed, 1), { years: 3, fixed: true, limited: false });
+  assert.equal(toEngineInput(fixed, { years: 8 }).years, 3);
+  const flex = newCar({
+    method: 'lease',
+    leaseMo: 3000,
+    leaseFixed: false,
+    leaseMinYears: 1,
+    leaseMaxYears: 3,
+  });
+  assert.deepEqual(leasePeriod(flex, 2), { years: 2, fixed: false, min: 1, max: 3, limited: false });
+  assert.equal(leasePeriod(flex, 5).years, 3, 'not longer than the longest period');
+  assert.equal(leasePeriod(flex, 5).limited, true);
+  assert.equal(
+    leasePeriod({ ...flex, leaseMinYears: 2 }, 1).years,
+    2,
+    'not shorter than the shortest period',
+  );
+  assert.equal(toEngineInput(flex, { years: 10 }).years, 3);
+});
+
+test('a lease asks its period, or its shortest and longest period', () => {
+  const lease = newCar({ method: 'lease' });
+  assert.deepEqual(costFields(lease), ['leaseMo', 'oneTimePayment', 'returnFee', 'yearsOfUse']);
+  const flex = { ...lease, leaseFixed: false };
+  assert.deepEqual(costFields(flex), [
+    'leaseMo',
+    'oneTimePayment',
+    'returnFee',
+    'leaseMinYears',
+    'leaseMaxYears',
+  ]);
+  const fields = ['leaseMinYears', 'leaseMaxYears'];
+  assert.equal(
+    validate({ ...flex, leaseMinYears: 3, leaseMaxYears: 1 }, fields).leaseMaxYears,
+    'maxBelowMin',
+  );
+  assert.equal(validate({ ...flex, leaseMinYears: 0, leaseMaxYears: 1 }, fields).leaseMinYears, 'required');
+  assert.deepEqual(validate({ ...flex, leaseMinYears: 1, leaseMaxYears: 1 }, fields), {});
+});
+
+test('v6 data moves to v7: existing leases become fixed with their period', () => {
+  const s = migrate({ version: 6, cars: [{ name: 'L', method: 'lease', leaseMo: 3000, yearsOfUse: 2 }] });
+  assert.equal(s.version, 7);
+  assert.equal(s.cars[0].leaseFixed, true);
+  assert.equal(s.cars[0].yearsOfUse, 2);
+  assert.deepEqual([s.cars[0].leaseMinYears, s.cars[0].leaseMaxYears], [1, 3]);
 });

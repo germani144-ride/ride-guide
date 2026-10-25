@@ -52,17 +52,17 @@
   flex-shrink: 0;
 }
 
-.row-km {
+.row-month {
   font: 700 1.6rem/1 var(--cond);
   font-variant-numeric: tabular-nums;
 }
 
-.row-km span {
+.row-month span {
   font: 600 0.85rem var(--cond);
   color: var(--ink-2);
 }
 
-.row-month {
+.row-km {
   color: var(--ink-2);
   font-size: 0.85rem;
   margin-top: 4px;
