@@ -1,7 +1,7 @@
 // Small DOM helpers and shared pieces of interface. User text only ever goes in via
 // textContent or input values, never as HTML.
 import { calculate, PART_KEYS } from './engine.js';
-import { toEngineInput, leasePeriod } from './model.js';
+import { toEngineInput, leasePeriod, leaseAllowsYears } from './model.js';
 import { money, plain } from './format.js';
 import { fmt } from './i18n.js';
 
@@ -142,9 +142,10 @@ export function factsList(r, car, t, lang, settings) {
 export const SPAN_CHOICES = [1, 2, 3, 4, 5, 6, 8, 10];
 export const KM_CHOICES = [5000, 10000, 15000, 20000, 25000, 30000];
 
-function choiceBar(ctx, key, choices, label, show) {
+// `selected`: the choice to highlight (normally the setting); `allowed`: which choices can be picked.
+function choiceBar(ctx, key, choices, label, show, { selected, allowed = () => true } = {}) {
   const { state, t } = ctx;
-  const current = state.settings[key];
+  const current = selected ?? state.settings[key];
   return el(
     'div',
     { class: 'field span-field' },
@@ -159,6 +160,7 @@ function choiceBar(ctx, key, choices, label, show) {
             type: 'button',
             role: 'radio',
             'aria-checked': String(v === current),
+            disabled: !allowed(v),
             onclick: () => {
               state.settings[key] = v;
               ctx.save();
@@ -173,8 +175,8 @@ function choiceBar(ctx, key, choices, label, show) {
   );
 }
 
-export function spanPicker(ctx) {
-  return choiceBar(ctx, 'years', SPAN_CHOICES, ctx.t.compare.span, String);
+export function spanPicker(ctx, options) {
+  return choiceBar(ctx, 'years', SPAN_CHOICES, ctx.t.compare.span, String, options);
 }
 export function kmPicker(ctx) {
   return choiceBar(ctx, 'kmPerYear', KM_CHOICES, ctx.t.compare.km, v => String(v / 1000));
@@ -186,27 +188,30 @@ export function assumptionBars(ctx, car = null) {
   if (car?.method !== 'lease') return el('div', { class: 'assumptions' }, spanPicker(ctx), kmPicker(ctx));
   const period = leasePeriod(car, state.settings.years);
   const span = spanText(period.years, t, state.lang);
-  const yearsBar = period.fixed
-    ? el(
-        'div',
-        { class: 'field span-field' },
-        el('span', { class: 'label' }, t.compare.span),
-        el('p', { class: 'span-locked' }, fmt(t.result.leaseFixedSpan, { span })),
-      )
-    : el(
-        'div',
-        {},
-        spanPicker(ctx),
-        el(
-          'p',
-          { class: 'hint span-hint' },
-          fmt(t.result.leaseFlexSpan, {
-            min: plain(period.min, state.lang),
-            max: plain(period.max, state.lang),
-            span,
-          }),
-        ),
-      );
+  const allowed = v => leaseAllowsYears(car, v);
+  const yearsBar =
+    period.fixed || !SPAN_CHOICES.some(allowed)
+      ? el(
+          'div',
+          { class: 'field span-field' },
+          el('span', { class: 'label' }, t.compare.span),
+          el('p', { class: 'span-locked' }, period.fixed ? fmt(t.result.leaseFixedSpan, { span }) : span),
+        )
+      : el(
+          'div',
+          {},
+          // Only the years the lease can run can be picked; the one used is highlighted.
+          spanPicker(ctx, { selected: period.years, allowed }),
+          el(
+            'p',
+            { class: 'hint span-hint' },
+            fmt(t.result.leaseFlexSpan, {
+              min: plain(period.min, state.lang),
+              max: plain(period.max, state.lang),
+              span,
+            }),
+          ),
+        );
   return el('div', { class: 'assumptions' }, yearsBar, kmPicker(ctx));
 }
 

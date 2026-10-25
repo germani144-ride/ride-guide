@@ -110,6 +110,11 @@ test('a flexible lease asks its shortest and longest period and stays within the
   );
   await expect(page.locator('.facts').first()).toContainText('Paid up front5,000 kr');
   await expect(page.locator('.facts').first()).toContainText('Total (2 years)');
+  // Only the years the lease can run can be picked; the one used is highlighted.
+  const years = page.locator('.span-field').nth(0);
+  await expect(years.getByRole('radio', { name: '3', exact: true })).toBeDisabled();
+  await expect(years.getByRole('radio', { name: '10', exact: true })).toBeDisabled();
+  await expect(years.getByRole('radio', { name: '2', exact: true })).toHaveAttribute('aria-checked', 'true');
   await page.locator('.span-field').nth(0).getByRole('radio', { name: '1', exact: true }).click();
   await expect(page.locator('.span-hint')).toHaveText(
     'This lease can run 1–2 years, so it is shown for 1 year.',

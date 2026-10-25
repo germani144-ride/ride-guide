@@ -214,6 +214,11 @@ button:disabled {
   border-radius: 9px;
 }
 
+.segmented button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
 .segmented button[aria-checked='true'] {
   background: var(--asphalt);
   color: var(--on-dark);

@@ -38,7 +38,8 @@ cars are always compared on equal terms. Two bars at the top of Garage, History,
 a car's page and the result change them for all cars at once (also in Settings). A car only stores
 its own fuel use. A lease runs its own period: a fixed lease always its lease period (on its page
 the years bar is replaced by "Fixed by the lease: 3 years"), a flexible lease the years of
-ownership kept within its shortest and longest period.
+ownership kept within its shortest and longest period (on its page only those years can be
+picked, and the one used is highlighted).
 
 On a car's page you can mark it as yours, edit it, **try another way to pay** (same car,
 new payment method, so lease vs. finance is two taps away), compare it, or delete it.

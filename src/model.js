@@ -76,6 +76,12 @@ export function costFields(car) {
 // How long a lease runs when costed. A fixed lease always runs its own period (`yearsOfUse`),
 // whatever the years of ownership are set to. A flexible lease (one you can end early, such as a
 // car subscription) follows the years of ownership, within its shortest and longest period.
+// Whether a lease can run for this many years (a fixed lease only its own period).
+export function leaseAllowsYears(car, years) {
+  if (switchOn(car, 'leaseFixed')) return years === car.yearsOfUse;
+  return years >= car.leaseMinYears && years <= Math.max(car.leaseMinYears, car.leaseMaxYears);
+}
+
 export function leasePeriod(car, years) {
   if (switchOn(car, 'leaseFixed')) return { years: car.yearsOfUse, fixed: true, limited: false };
   const min = car.leaseMinYears;

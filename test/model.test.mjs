@@ -17,6 +17,7 @@ import {
   toShown,
   fromShown,
   leasePeriod,
+  leaseAllowsYears,
 } from '../src/model.js';
 import { SEED_CARS } from '../src/seed.js';
 
@@ -286,4 +287,17 @@ test('v6 data moves to v7: existing leases become fixed with their period', () =
   assert.equal(s.cars[0].leaseFixed, true);
   assert.equal(s.cars[0].yearsOfUse, 2);
   assert.deepEqual([s.cars[0].leaseMinYears, s.cars[0].leaseMaxYears], [1, 3]);
+});
+
+test('which years a lease can run', () => {
+  const fixed = newCar({ method: 'lease', yearsOfUse: 3 });
+  assert.deepEqual(
+    [1, 2, 3, 4].map(y => leaseAllowsYears(fixed, y)),
+    [false, false, true, false],
+  );
+  const flex = newCar({ method: 'lease', leaseFixed: false, leaseMinYears: 2, leaseMaxYears: 4 });
+  assert.deepEqual(
+    [1, 2, 3, 4, 5].map(y => leaseAllowsYears(flex, y)),
+    [false, true, true, true, false],
+  );
 });
