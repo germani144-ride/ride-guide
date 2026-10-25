@@ -41,12 +41,12 @@ export async function forceUpdate() {
           };
           sw.addEventListener('statechange', done);
           done();
-          setTimeout(resolve, 8000); // don't hang on a slow network: the reload is network-first anyway
+          setTimeout(resolve, 8000); // don't hang on a slow network: with the caches gone, the reload asks the server
         });
       }
     }
   } catch {
-    /* offline or unsupported: the reload still fetches network-first */
+    /* offline or unsupported: with the caches gone, the reload asks the server */
   }
   location.reload();
 }

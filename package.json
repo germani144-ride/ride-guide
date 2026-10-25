@@ -1,6 +1,6 @@
 {
   "name": "ride-guide",
-  "version": "0.8.1",
+  "version": "0.8.2",
   "private": true,
   "type": "module",
   "description": "Compare what cars really cost: lease, buy or finance.",

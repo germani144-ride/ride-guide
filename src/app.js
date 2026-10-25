@@ -224,7 +224,24 @@ async function start() {
     );
   }
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
-    navigator.serviceWorker.register('./sw.js', { scope: './', updateViaCache: 'none' }).catch(() => {});
+    // The app opens from the worker's cache (sw.js). When a new version's worker takes over,
+    // reload once so the screen runs the new files; not on the very first install.
+    const hadWorker = !!navigator.serviceWorker.controller;
+    let reloading = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!hadWorker || reloading) return;
+      reloading = true;
+      location.reload();
+    });
+    navigator.serviceWorker
+      .register('./sw.js', { scope: './', updateViaCache: 'none' })
+      .then(reg =>
+        // an installed app is often resumed rather than reopened: look for a new version then too
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'visible') reg.update().catch(() => {});
+        }),
+      )
+      .catch(() => {});
   }
 }
 

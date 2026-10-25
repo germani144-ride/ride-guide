@@ -259,8 +259,15 @@ Settings, and names the offline cache, so phones pick up the new files. After pu
 `https://germani144-ride.github.io/ride-guide/src/version.js` and check the new version is live;
 if GitHub Pages didn't publish it, another push re-triggers the build.
 
-The service worker loads files from the network first (so a change shows up on the next open)
-and falls back to its cached copy offline. It still only creates, reads and deletes caches named
+The service worker opens the app from its cache (cache-first), so opening never waits for the
+network and works offline. Network-first made every open wait for one round trip per file
+(found 2026-10-25), so don't go back to it. How a release reaches a phone: the browser checks
+`sw.js` and `src/version.js` on every open (`updateViaCache: 'none'`) and `src/app.js` asks again
+when the app comes back to the screen. The new version names a new cache, so the new worker
+downloads every file fresh (`?v=` so GitHub's CDN can't hand out an old copy, and
+`cache: 'reload'`) and only takes over once all of them arrived; `src/app.js` then reloads once.
+The first open after a release still shows the old version for a moment. That is also why every
+shipped change must bump the version: without it, phones keep the old files. It still only creates, reads and deletes caches named
 `rideguide-*` and only handles requests inside `/ride-guide/`, so it stays clean if it ever shares
 an origin with another app again.
 The manifest has its own `id` (`/ride-guide/app`) and `scope` (`./`). Never change the `id` of an
