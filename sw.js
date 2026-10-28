@@ -48,6 +48,7 @@ const SHELL = [
   './src/format.js',
   './src/compare.js',
   './src/routes.js',
+  './src/explain.js',
   './fonts/barlow-latin-400-normal.woff2',
   './fonts/barlow-latin-500-normal.woff2',
   './fonts/barlow-latin-600-normal.woff2',

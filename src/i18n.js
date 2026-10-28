@@ -42,7 +42,7 @@ const en = {
     },
     running: {
       title: 'What does it cost to run?',
-      hint: "Monthly amounts at today's prices. Leave 0 if it does not apply. On a car you own, insurance follows the car's value down.",
+      hint: "Monthly amounts at today's prices. Leave 0 if it does not apply.",
     },
     result: { title: 'Here is what it costs' },
   },
@@ -95,7 +95,7 @@ const en = {
     ],
     serviceIncluded: [
       'Service is included in the lease',
-      'Maintenance, repairs and inspection are paid by the leasing company.',
+      'Maintenance and repairs are paid by the leasing company.',
     ],
     tyresIncluded: ['Tyres are included in the lease', null],
     leaseFixed: [
@@ -135,6 +135,32 @@ const en = {
     methodLabel: 'Method',
     groups: { car: 'Car', payment: 'Payment', driving: 'Fuel', running: 'Running costs' },
   },
+  explain: {
+    intro: "Monthly averages over {span}, in today's money. Tap a line to see how it is calculated.",
+    depreciation:
+      'You pay {price}. It is worth {start} now and about {end} after {span}{how}. {price} − {end} = {loss}, spread over {months} months.',
+    curveAuto: ', following the estimated value curve for its age, fuel and km',
+    curveManual: ', losing {rate}% a year as you entered',
+    capital:
+      'The money in the car could have earned {rate}% a year (Settings). This is that lost return over {span}, after what you get back when you sell, per month.',
+    capitalNegative:
+      'With the loan you pay later, so your own money can earn {rate}% a year meanwhile (Settings). This is what that saves per month over {span}.',
+    interest: 'Interest on the {loan} loan at {apr}% ÅOP: {total} over {span}, spread over {months} months.',
+    lease:
+      "{leaseMo} a month, plus the {oneTime} one-time payment at the start and the {returnFee} return fee at the end, spread over {span} in today's money.",
+    energy: '{km} km a year ÷ {kmPerUnit} km per litre × {price} kr per litre (Settings).',
+    energyEl:
+      '{km} km a year ÷ {kmPerUnit} km per kWh (your {entered}, with {winter}% extra use in the cold) × {price} kr per kWh: {home} kr at home, and {public} kr at public chargers for {share}% of charging (Settings).',
+    energyGrowth: ' Prices rise {g}% a year.',
+    asEntered: 'As you entered it: {amount} a month.',
+    greenTax: '{half} per half year, as on the bill, ÷ 6.',
+    maintenance:
+      'Estimated for a {fuel} car driving {km} km a year: {base} a year when new, plus 8% of that for each year of age. It is {from} to {to} years old in this period, so about {avg} a year.',
+    tyres: '{km} km a year at {set} for a set of tyres that lasts {life} km (Settings).',
+    winterTyres: ' Plus two tyre swaps a year at {swap} each.',
+    washing: '{amount} a month (Settings).',
+    buffer: 'A {pct}% safety margin on top of everything else, for cars you own (Settings).',
+  },
   shares: {
     energy: 'Fuel / power',
     interest: 'Loan interest',
@@ -146,7 +172,7 @@ const en = {
     lease: 'Lease',
     capital: 'Money tied up in the car',
     tyres: 'Tyres',
-    other: 'Inspection and washing',
+    washing: 'Washing',
     buffer: 'Safety margin',
   },
   sharesNegative: { capital: 'Saved by paying later' },
@@ -210,7 +236,6 @@ const en = {
         'Adds two tyre swaps a year. Both sets wear, so the tyre cost per km stays the same.',
       ],
       tyreSwapPrice: ['Tyre swap', null],
-      inspectionPrice: ['Periodic inspection (syn)', 'At 4 years, then every 2 years.'],
       washingMo: ['Washing', null],
       energyGrowth: ['Fuel and electricity price change', "Yearly change. 0 keeps today's prices."],
       evPublicShare: ['Charged at public chargers', 'The rest is charged at home.'],
@@ -298,7 +323,7 @@ const da = {
     },
     running: {
       title: 'Hvad koster den i drift?',
-      hint: 'Månedlige beløb i dagens priser. Lad stå på 0, hvis det ikke gælder. For en bil, du ejer, følger forsikringen bilens værdi nedad.',
+      hint: 'Månedlige beløb i dagens priser. Lad stå på 0, hvis det ikke gælder.',
     },
     result: { title: 'Det her koster den' },
   },
@@ -351,7 +376,7 @@ const da = {
     ],
     serviceIncluded: [
       'Service er inkluderet i leasingen',
-      'Vedligehold, reparationer og syn betales af leasingselskabet.',
+      'Vedligehold og reparationer betales af leasingselskabet.',
     ],
     tyresIncluded: ['Dæk er inkluderet i leasingen', null],
     leaseFixed: [
@@ -391,6 +416,34 @@ const da = {
     methodLabel: 'Betalingsform',
     groups: { car: 'Bil', payment: 'Betaling', driving: 'Forbrug', running: 'Driftsudgifter' },
   },
+  explain: {
+    intro:
+      'Gennemsnit pr. måned over {span}, i dagens kroner. Tryk på en linje for at se, hvordan den er regnet.',
+    depreciation:
+      'Du betaler {price}. Den er {start} værd nu og cirka {end} efter {span}{how}. {price} − {end} = {loss}, fordelt over {months} måneder.',
+    curveAuto: ', efter den beregnede værdikurve for alder, drivmiddel og km',
+    curveManual: ', med et værditab på {rate} % om året, som du har angivet',
+    capital:
+      'Pengene i bilen kunne have givet {rate} % om året (Indstillinger). Det her er det tabte afkast over {span}, efter det du får tilbage ved salg, pr. måned.',
+    capitalNegative:
+      'Med lånet betaler du senere, så dine egne penge kan give {rate} % om året imens (Indstillinger). Det her er, hvad det sparer pr. måned over {span}.',
+    interest:
+      'Renter på lånet på {loan} med {apr} % ÅOP: {total} over {span}, fordelt over {months} måneder.',
+    lease:
+      '{leaseMo} om måneden plus engangsydelsen på {oneTime} ved start og tilbageleveringsgebyret på {returnFee} til sidst, fordelt over {span} i dagens kroner.',
+    energy: '{km} km om året ÷ {kmPerUnit} km pr. liter × {price} kr. pr. liter (Indstillinger).',
+    energyEl:
+      '{km} km om året ÷ {kmPerUnit} km pr. kWh (dine {entered} med {winter} % ekstra forbrug i kulde) × {price} kr. pr. kWh: {home} kr. derhjemme og {public} kr. på offentlige ladere for {share} % af opladningen (Indstillinger).',
+    energyGrowth: ' Priserne stiger {g} % om året.',
+    asEntered: 'Som du har angivet: {amount} om måneden.',
+    greenTax: '{half} pr. halvår, som på opkrævningen, ÷ 6.',
+    maintenance:
+      'Beregnet for en {fuel}bil, der kører {km} km om året: {base} om året som ny, plus 8 % af det for hvert år, den bliver ældre. Den er {from} til {to} år gammel i perioden, så cirka {avg} om året.',
+    tyres: '{km} km om året med {set} for et sæt dæk, der holder {life} km (Indstillinger).',
+    winterTyres: ' Plus to dækskift om året til {swap} hver.',
+    washing: '{amount} om måneden (Indstillinger).',
+    buffer: 'En sikkerhedsmargin på {pct} % oven i det hele for biler, du ejer (Indstillinger).',
+  },
   shares: {
     energy: 'Brændstof / el',
     interest: 'Renter på lånet',
@@ -402,7 +455,7 @@ const da = {
     lease: 'Leasing',
     capital: 'Penge bundet i bilen',
     tyres: 'Dæk',
-    other: 'Syn og vask',
+    washing: 'Vask',
     buffer: 'Sikkerhedsmargin',
   },
   sharesNegative: { capital: 'Sparet ved at betale senere' },
@@ -469,7 +522,6 @@ const da = {
         'Lægger to dækskift om året til. Begge sæt slides, så dækprisen pr. km er den samme.',
       ],
       tyreSwapPrice: ['Dækskift', null],
-      inspectionPrice: ['Periodisk syn', 'Efter 4 år og derefter hvert 2. år.'],
       washingMo: ['Vask', null],
       energyGrowth: ['Ændring i brændstof- og elpris', 'Ændring pr. år. 0 holder dagens priser.'],
       evPublicShare: ['Opladet på offentlige ladere', 'Resten lades derhjemme.'],

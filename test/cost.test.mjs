@@ -17,7 +17,7 @@ const base = {
   maintenanceAuto: true,
 };
 // Only the money parts: no running costs, no margin, no return.
-const bare = { buffer: 0, returnRate: 0, tyreSetPrice: 0, inspectionPrice: 0, washingMo: 0 };
+const bare = { buffer: 0, returnRate: 0, tyreSetPrice: 0, washingMo: 0 };
 const noRunning = { ...base, kmPerUnit: 0, maintenanceAuto: false, maintenanceMo: 0 };
 
 test('value curve: a bigger first-year loss, then a yearly loss that shrinks with age', () => {
@@ -165,11 +165,11 @@ test('tyres per km, plus swaps for winter tyres; included tyres cost nothing', (
   assert.equal(calculate({ ...car, method: 'lease', leaseMo: 1, tyresIncluded: true }, s).parts.tyres, 0);
 });
 
-test('inspection at 4 years, then every 2; skipped when the lease includes service', () => {
-  const s = { ...bare, years: 4, inspectionPrice: 480 };
+test('washing is the same every month, for every car', () => {
+  const s = { ...bare, years: 4, washingMo: 150 };
   const car = { ...noRunning, method: 'cash', price: 0, age: 3 };
-  near(calculate(car, s).parts.other, (2 * 480) / 48, 1e-9, 'inspections at age 4 and 6');
-  near(calculate({ ...car, method: 'lease', leaseMo: 1 }, s).parts.other, 0, 1e-9, 'lease with service');
+  near(calculate(car, s).parts.washing, 150, 1e-9, 'owned');
+  near(calculate({ ...car, method: 'lease', leaseMo: 1 }, s).parts.washing, 150, 1e-9, 'lease');
 });
 
 test('electric energy mixes home and public charging, with extra use in the cold', () => {
@@ -186,12 +186,20 @@ test('electric energy mixes home and public charging, with extra use in the cold
   near(calculate(car, s).parts.energy, (1000 / (6 / 1.2)) * (0.75 * 1.5 + 0.25 * 3.5), 1e-9, 'energy');
 });
 
-test('insurance on an owned car follows its value down; on a lease it stays', () => {
+test('insurance is counted exactly as typed, owned or leased', () => {
   const s = { ...bare, years: 5 };
-  const own = calculate({ ...noRunning, method: 'cash', price: 300000, insuranceMo: 600 }, s);
-  assert.ok(own.parts.insurance < 600 && own.parts.insurance > 300);
-  const lease = calculate({ ...noRunning, method: 'lease', leaseMo: 1, insuranceMo: 600 }, s);
-  near(lease.parts.insurance, 600, 1e-9, 'lease');
+  near(
+    calculate({ ...noRunning, method: 'cash', price: 300000, insuranceMo: 520 }, s).parts.insurance,
+    520,
+    1e-9,
+    'owned',
+  );
+  near(
+    calculate({ ...noRunning, method: 'lease', leaseMo: 1, insuranceMo: 520 }, s).parts.insurance,
+    520,
+    1e-9,
+    'lease',
+  );
 });
 
 test('the safety margin applies to owned cars only', () => {

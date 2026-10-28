@@ -19,7 +19,6 @@ const GROUPS = {
     ['tyreLifeKmEv', 'km', false],
     ['winterTyres'],
     ['tyreSwapPrice', 'kr', false],
-    ['inspectionPrice', 'kr', false],
     ['washingMo', 'krMonth', false],
   ],
   energy: [

@@ -192,8 +192,8 @@
   background: var(--part-tyres);
 }
 
-.part-other {
-  background: var(--part-other);
+.part-washing {
+  background: var(--part-washing);
 }
 
 .part-buffer {
@@ -230,4 +230,40 @@
 
 .answers-title {
   margin-bottom: 0 !important;
+}
+
+/* Breakdown lines that open to show how they are calculated. */
+.breakdown-hint {
+  margin: 4px 0 10px;
+}
+.legend li.explained {
+  display: block;
+  padding: 0;
+}
+.legend details summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 0;
+  cursor: pointer;
+  list-style: none;
+}
+.legend details summary::-webkit-details-marker {
+  display: none;
+}
+.legend details summary::after {
+  content: '›';
+  color: var(--ink-2);
+  font-size: 1.2rem;
+  line-height: 1;
+  transition: transform 0.15s;
+}
+.legend details[open] summary::after {
+  transform: rotate(90deg);
+}
+.legend-why {
+  margin: 0 0 8px 22px;
+  color: var(--ink-2);
+  font-size: 0.9rem;
+  line-height: 1.45;
 }

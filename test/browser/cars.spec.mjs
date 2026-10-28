@@ -3,14 +3,14 @@ import { test, expect } from './fixtures.mjs';
 // The spreadsheet cars the app starts with, at 3 years and 10,000 km a year.
 const HISTORY = [
   ['Fiesta GM', '4,480 kr per month', '5.38 kr per km'],
-  ['MondeoI', '3,774 kr per month', '4.53 kr per km'],
-  ['MondeoD', '3,459 kr per month', '4.15 kr per km'],
-  ['MondeoIII', '3,641 kr per month', '4.37 kr per km'],
+  ['MondeoI', '3,777 kr per month', '4.53 kr per km'],
+  ['MondeoD', '3,455 kr per month', '4.15 kr per km'],
+  ['MondeoIII', '3,649 kr per month', '4.38 kr per km'],
   ['CeedGM', '5,236 kr per month', '6.28 kr per km'],
   ['Y GM', '4,954 kr per month', '5.94 kr per km'],
   ['Scenic GM', '4,765 kr per month', '5.72 kr per km'],
 ];
-const AT_20000_KM = ['3.14', '3.36', '3.02', '3.21', '3.69', '3.11', '3.00'].map(v => `${v} kr per km`);
+const AT_20000_KM = ['3.14', '3.36', '3.02', '3.22', '3.69', '3.11', '3.00'].map(v => `${v} kr per km`);
 
 test('history lists every car with its cost', async ({ page, app }) => {
   await app.open('#/history');
@@ -42,8 +42,8 @@ test('compare two cars', async ({ page, app }) => {
   await expect(cols).toHaveCount(2);
   await expect(cols.nth(0)).toContainText('Cheapest');
   await expect(cols.nth(0).locator('.price-sub-num')).toHaveText('4.15');
-  await expect(cols.nth(1).locator('.price-sub-num')).toHaveText('4.37');
-  await expect(cols.nth(1).locator('.diff')).toHaveText('+182 kr per month');
+  await expect(cols.nth(1).locator('.price-sub-num')).toHaveText('4.38');
+  await expect(cols.nth(1).locator('.diff')).toHaveText('+195 kr per month');
 });
 
 test('a car page shows the breakdown, can be marked as mine and deleted', async ({ page, app }) => {
@@ -67,4 +67,18 @@ test('on a narrow phone the comparison columns get tighter', async ({ page, app 
   await app.open(`#/compare/${ids.join(',')}`);
   await expect(page.locator('.compare-col').first()).toHaveCSS('padding', '8px');
   await expect(page.locator('.compare-grid')).toHaveCSS('gap', '6px');
+});
+
+test('each line under Where the money goes opens to show how it is calculated', async ({ page, app }) => {
+  await app.open('#/history');
+  await page.locator('.row', { hasText: 'MondeoD' }).click();
+  await expect(page.locator('.breakdown-hint')).toHaveText(
+    "Monthly averages over 3 years, in today's money. Tap a line to see how it is calculated.",
+  );
+  const insurance = page.locator('.legend li', { hasText: 'Insurance' });
+  await expect(insurance.locator('.legend-why')).toBeHidden();
+  await insurance.locator('summary').click();
+  await expect(insurance.locator('.legend-why')).toHaveText(/^As you entered it: [\d,]+ kr a month\.$/);
+  const typed = (await insurance.locator('.legend-why').textContent()).match(/([\d,]+) kr a month/)[1];
+  await expect(insurance.locator('.legend-val')).toHaveText(`${typed} kr`);
 });

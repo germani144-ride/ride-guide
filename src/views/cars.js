@@ -16,6 +16,7 @@ import {
 } from '../ui.js';
 import { money } from '../format.js';
 import { compareResults } from '../compare.js';
+import { explainParts } from '../explain.js';
 import { answers } from './result.js';
 
 export const MAX_COMPARE = 3;
@@ -166,7 +167,7 @@ export function renderCar(ctx, id) {
     return el('div', { class: 'list-view' }, emptyState(t.car.notFound, t.history.title, '#/history'));
   }
   const r = evaluate(car, state.settings);
-  const { bar, legend } = breakdownBar(r.parts, t, lang);
+  const { bar, legend } = breakdownBar(r.parts, t, lang, explainParts(r, car, state.settings, t, lang));
 
   const actions = el(
     'div',
@@ -240,6 +241,11 @@ export function renderCar(ctx, id) {
     assumptionBars(ctx, car),
     factsList(r, car, t, lang, state.settings),
     el('h3', {}, t.result.breakdown),
+    el(
+      'p',
+      { class: 'hint breakdown-hint' },
+      fmt(t.explain.intro, { span: spanText(r.months / 12, t, lang) }),
+    ),
     bar,
     legend,
     el('h3', { class: 'answers-title' }, t.car.answers),

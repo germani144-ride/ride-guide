@@ -3,6 +3,8 @@
 import { DRIVING_FIELDS, costFields, runningFields, toShown, switchOn } from '../model.js';
 import { plain } from '../format.js';
 import { labelKey } from '../wizard-flow.js';
+import { explainParts } from '../explain.js';
+import { fmt } from '../i18n.js';
 import {
   el,
   euStrip,
@@ -10,6 +12,7 @@ import {
   priceBlock,
   factsList,
   breakdownBar,
+  spanText,
   carTitle,
   assumptionBars,
 } from '../ui.js';
@@ -19,7 +22,7 @@ export function renderResult(ctx, draft) {
   const car = draft.car;
   const lang = state.lang;
   const r = evaluate(car, state.settings);
-  const { bar, legend } = breakdownBar(r.parts, t, lang);
+  const { bar, legend } = breakdownBar(r.parts, t, lang, explainParts(r, car, state.settings, t, lang));
   const editing = Boolean(draft.editingId);
 
   const change = step => {
@@ -46,6 +49,11 @@ export function renderResult(ctx, draft) {
     assumptionBars(ctx, car),
     factsList(r, car, t, lang, state.settings),
     el('h3', {}, t.result.breakdown),
+    el(
+      'p',
+      { class: 'hint breakdown-hint' },
+      fmt(t.explain.intro, { span: spanText(r.months / 12, t, lang) }),
+    ),
     bar,
     legend,
     answers(car, t, lang, change),

@@ -25,7 +25,6 @@ export const DEFAULT_SETTINGS = {
   tyreLifeKmEv: 25000, // heavier cars with instant torque wear tyres faster
   winterTyres: false, // a second set, swapped twice a year
   tyreSwapPrice: 400,
-  inspectionPrice: 500, // periodic inspection (syn): at 4 years, then every 2 years
   washingMo: 100,
 };
 
@@ -58,8 +57,6 @@ export const MAINTENANCE = {
 };
 
 // Share of the insurance premium that follows the car's value (the rest is fixed).
-export const INSURANCE_VALUE_SHARE = 0.5;
-export const INSPECTION = { firstAge: 4, every: 2 };
 
 // Order of the parts in the breakdown.
 export const PART_KEYS = [
@@ -72,7 +69,7 @@ export const PART_KEYS = [
   'greenTax',
   'maintenance',
   'tyres',
-  'other',
+  'washing',
   'parking',
   'buffer',
 ];
@@ -96,7 +93,7 @@ export const PART_KEYS = [
  * @property {number} returnFee        paid when the car is handed back, at the end
  * @property {number} [years]          this car's own period, overriding settings.years (a lease
  *                                     runs for its own period; see leasePeriod() in model.js)
- * @property {boolean} serviceIncluded lease covers maintenance and inspection
+ * @property {boolean} serviceIncluded lease covers maintenance
  * @property {boolean} tyresIncluded   lease covers tyres
  * @property {number} kmPerYear
  * @property {number} kmPerUnit         km per litre (or km per kWh)
@@ -139,12 +136,6 @@ export function valueCurve(fuel, kmPerYear, age) {
   return Math.exp(log);
 }
 
-// Number of inspections a car has had by a given age.
-function inspectionsBy(age) {
-  if (age < INSPECTION.firstAge - 1e-9) return 0;
-  return Math.floor((age - INSPECTION.firstAge + 1e-9) / INSPECTION.every) + 1;
-}
-
 /**
  * @param {CarInput} input
  * @param {Partial<typeof DEFAULT_SETTINGS>} [settings]
@@ -185,6 +176,7 @@ export function calculate(input, settings = {}) {
 
   // ----- owning: price, loan, sale at the end -----
   let upfront = 0;
+  let loanAmount = 0;
   let residual = 0;
   let loanLeft = 0;
   let interestPaid = 0;
@@ -193,6 +185,7 @@ export function calculate(input, settings = {}) {
   if (owned && price) {
     const down = input.method === 'cash' ? price : clamp(num(input.downPayment), 0, 1) * price;
     const loan = price - down;
+    loanAmount = loan;
     const apr = num(input.apr);
     const n = Math.round(num(input.financeMonths));
     const payment = loan > 0 && n > 0 ? pmt(apr / 12, n, loan) : 0;
@@ -239,12 +232,7 @@ export function calculate(input, settings = {}) {
     const growth = Math.pow(1 + num(s.energyGrowth), (k - 1) / 12);
     add('energy', kmPerUnit ? (kmMo / kmPerUnit) * unitPrice * growth : 0, k);
 
-    const ins = num(input.insuranceMo);
-    const insShare =
-      owned && marketValue
-        ? 1 - INSURANCE_VALUE_SHARE + (INSURANCE_VALUE_SHARE * valueAt(mid)) / marketValue
-        : 1;
-    add('insurance', ins * insShare, k);
+    add('insurance', num(input.insuranceMo), k); // insurers keep charging the same
     add('greenTax', num(input.greenTaxMo), k);
     add('parking', num(input.parkingMo), k);
 
@@ -255,8 +243,6 @@ export function calculate(input, settings = {}) {
           : ((m.baseYear + m.perKm * kmYear) / 12) *
             (1 + MAINTENANCE.ageGrowth * Math.min(age, MAINTENANCE.maxAge));
       add('maintenance', maint, k);
-      if (inspectionsBy(age0 + k / 12) > inspectionsBy(age0 + (k - 1) / 12))
-        add('other', num(s.inspectionPrice), k);
     }
     if (!tyresByLease) {
       add(
@@ -266,7 +252,7 @@ export function calculate(input, settings = {}) {
         k,
       );
     }
-    add('other', num(s.washingMo), k);
+    add('washing', num(s.washingMo), k);
   }
 
   // ----- equivalent monthly cost per part -----
@@ -302,5 +288,18 @@ export function calculate(input, settings = {}) {
     loanLeft,
     interestPaid,
     yearlyValueLoss: yearlyValueLoss(fuel, kmYear, Math.max(1, age0)),
+    // Figures behind the parts, so the app can show how each one is calculated.
+    details: {
+      price,
+      marketValue,
+      loan: loanAmount,
+      ageStart: age0,
+      ageEnd: age0 + months / 12,
+      kmPerYear: kmYear,
+      kmPerUnit, // after the extra use in the cold, for electric cars
+      unitPrice, // fuel or blended electricity price at the start
+      tyreLifeKm: num(life),
+      maintenanceBaseYear: m.baseYear + m.perKm * kmYear,
+    },
   };
 }

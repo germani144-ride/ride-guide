@@ -57,7 +57,7 @@
   --part-parking: #7a868d;
   --part-capital: #4b8fb0;
   --part-tyres: #3d3d3d;
-  --part-other: #a8778a;
+  --part-washing: #a8778a;
   --part-buffer: #b9c0c5;
   --radius: 14px;
   --tabs-h: 64px;
@@ -85,7 +85,7 @@
     --part-parking: #9eabb2;
     --part-capital: #7cc0e0;
     --part-tyres: #c9c9c9;
-    --part-other: #d6a5b8;
+    --part-washing: #d6a5b8;
     --part-buffer: #5d6870;
   }
 }

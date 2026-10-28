@@ -29,7 +29,8 @@ The app has three tabs:
   6. Running costs: insurance and parking per month, green tax per half year (as on the bill;
      the app divides it by 6); maintenance is estimated
      (switch it off to type your own; not asked when the lease includes service).
-  7. The result: cost per month (the big number), kr per km, where the money goes, for the shared years of
+  7. The result: cost per month (the big number), kr per km, where the money goes (tap any line
+     to see how it is calculated, with the car's own numbers), for the shared years of
      ownership and km per year (two bars right there). Save it as **my car** or just to **history**. Any answer
      can be changed from the result screen.
 - **Garage** shows the cars you marked as yours.
@@ -48,7 +49,7 @@ new payment method, so lease vs. finance is two taps away), compare it, or delet
 
 Settings (top right) holds the language (English or Danish), the years of ownership and km per
 year, the return on your money (4% a year), the safety margin on owned cars (5%), the running-cost
-prices (tyres, winter tyres, inspection, washing), fuel and electricity
+prices (tyres, winter tyres, washing), fuel and electricity
 (petrol, diesel, electricity at home and at public chargers, public charging share, extra winter
 use for electric cars, yearly price change),
 and backup export and import. Settings save automatically as you
@@ -101,15 +102,15 @@ All prices are in today's money.
 
 | Part | How it is calculated |
 |---|---|
-| Loss in value | price paid − value at the end, spread evenly per month. The value starts from the market value (the price if none is given), so a good deal lowers the loss and a markup raises it; the loan and the money paid up front use the price. Value curve: −20% in the first year, then a yearly loss that shrinks with age: 6% + 9% × e^(−(age − 1) ÷ 4), so 15% in the second year, about 9% at 5 years and about 6–7% for cars over 10 (electric: −22%, then 7% + 10% × the same). The yearly rate goes up 1 point per 5,000 km above 15,000 km a year, and down when you drive less (limits 3–30%). Checked against TjekBil's market values for a 2016 car. A used car continues from its age (model year). Manual mode: value = market value ÷ (1 + yearly rate)^years. On owned cars, the part of insurance that follows the value follows it from the market value. |
+| Loss in value | price paid − value at the end, spread evenly per month. The value starts from the market value (the price if none is given), so a good deal lowers the loss and a markup raises it; the loan and the money paid up front use the price. Value curve: −20% in the first year, then a yearly loss that shrinks with age: 6% + 9% × e^(−(age − 1) ÷ 4), so 15% in the second year, about 9% at 5 years and about 6–7% for cars over 10 (electric: −22%, then 7% + 10% × the same). The yearly rate goes up 1 point per 5,000 km above 15,000 km a year, and down when you drive less (limits 3–30%). Checked against TjekBil's market values for a 2016 car. A used car continues from its age (model year). Manual mode: value = market value ÷ (1 + yearly rate)^years. |
 | Money tied up in the car | equivalent monthly cost of (down payment + instalments + loan left at the end − sale value) at the return rate, minus loss in value and interest. Negative ("saved by paying later") when a cheap loan beats paying cash. |
 | Loan interest | interest paid within the span, spread per month. Instalments follow PMT(ÅOP ÷ 12, loan period, loan). |
 | Lease | monthly lease + the one-time payment at the start + the return fee at the end, over the lease's own period, discounted. |
 | Fuel / power | km per month ÷ km per unit × price, growing by the yearly price change. Prices are settings shared by every car: petrol 17.50 and diesel 19.50 kr per litre (October 2026), electricity 1.40 kr per kWh at home and 3.50 at public chargers (FDM 2026). Electric: 80% home + 20% public, and 10% extra use in the cold. |
-| Insurance | today's premium; on owned cars half of it follows the car's value down. |
+| Insurance | as typed, per month (insurers keep charging the same). |
 | Maintenance and repairs | (yearly base + per km × km a year) ÷ 12 × (1 + 8% × age), age up to 15. Petrol 3,000 kr + 0.25 kr/km, diesel 3,500 kr + 0.25 kr/km, electric 2,000 kr + 0.15 kr/km. Skipped when the lease includes service. |
 | Tyres | km × (four tyres 3,500 kr ÷ tyre life 30,000 km; electric 25,000 km), plus two swaps a year (400 kr each) with winter tyres. Skipped when the lease includes tyres. |
-| Inspection and washing | inspection (500 kr) at age 4 and then every 2 years, unless the lease includes service; washing 100 kr a month. Roadside assistance is not counted: it comes with the car insurance. |
+| Washing | 100 kr a month (Settings). Periodic inspection (syn) and roadside assistance are not counted. |
 | Green tax | typed per half year, as on the bill, stored and counted per month (÷ 6). |
 | Parking | as typed, per month. |
 | Safety margin | owned cars only: 5% on top of everything else. |
@@ -124,9 +125,8 @@ FDM's 2026 car budget (petrol about 4.3 kr/km, electric about 3.6 kr/km; FDM: 4.
 `test/cost.test.mjs` keeps it within 0.35 kr/km.
 
 Defaults come from: [FDM, cost of a car in 2026](https://fdm.dk/nyheder/nyt-om-trafik-og-biler/hvad-koster-det-at-holde-bil-i-2026-faa-svaret-her)
-(home/public charging split, totals), [FDM, inspection rules](https://fdm.dk/vaerd-at-vide/biltest-bilsyn/hvornaar-skal-min-bil-synes),
-and Danish price surveys for [tyres](https://www.skagenonline.dk/faq/hvad-koster-nye-daek-inkl-montering) and
-[inspection](https://www.skagenonline.dk/faq/hvad-koster-et-bilsyn-hos-dekra).
+(home/public charging split, totals) and a Danish price survey for
+[tyres](https://www.skagenonline.dk/faq/hvad-koster-nye-daek-inkl-montering).
 The value and maintenance curves are first estimates, to be replaced by data (the survival model
 for maintenance is planned).
 
@@ -165,6 +165,7 @@ src/wizard-flow.js            the New car wizard's steps: order, fields, switche
 src/ui.js                     shared interface pieces (el(), price, breakdown, bars, plate, toast)
 src/format.js                 numbers in English or Danish
 src/compare.js                what the comparison highlights
+src/explain.js                how each part of the cost is calculated, in words (no DOM)
 src/engine.js                 the cost engine
 src/engine-sheet.js           sheet mode: the spreadsheet's formulas (tests only)
 src/model.js                  the car record, payment methods, settings, migrate(), validation
@@ -214,7 +215,7 @@ same `load()` and `save()`. When the shape of saved data changes, `STATE_VERSION
 
 - Unit tests (`npm test`, Node's built-in runner):
   - `test/cost.test.mjs`: the cost engine: value curve, money tied up, finance, the lease period,
-    maintenance, tyres, inspection, electricity, insurance, safety margin, and that the defaults
+    maintenance, tyres, washing, electricity, insurance, safety margin, and that the defaults
     stay near FDM's 2026 budget.
   - `test/engine.test.mjs`: sheet mode against the spreadsheet: the seven current columns in
     `data/sheet_fixtures.json` within 0.01 kr, and three financed scenarios in

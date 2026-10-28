@@ -27,8 +27,8 @@ test('add a car through the wizard and save it as my car', async ({ page, app })
   await page.getByRole('button', { name: 'Next' }).click();
 
   await expect(page.getByRole('heading', { name: 'Here is what it costs' })).toBeVisible();
-  await expect(page.locator('.price-num')).toHaveText('5,863');
-  await expect(page.locator('.price-sub-num')).toHaveText('7.04');
+  await expect(page.locator('.price-num')).toHaveText('5,923');
+  await expect(page.locator('.price-sub-num')).toHaveText('7.11');
   await expect(page.locator('.facts').first()).toContainText('250,000 kr');
 
   await page.getByRole('button', { name: 'Save as my car' }).click();

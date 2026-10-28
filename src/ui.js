@@ -52,7 +52,8 @@ export function evaluate(car, settings) {
 }
 
 // Parts below zero (a loan can beat paying cash) are listed as savings but left out of the bar.
-export function breakdownBar(parts, t, lang) {
+// With `why` ({ part: sentence }, see explain.js), each line opens to show how it is calculated.
+export function breakdownBar(parts, t, lang, why = null) {
   const all = PART_KEYS.map(k => [k, parts[k] || 0]).filter(([, v]) => Math.abs(v) > 0.5);
   const items = all.filter(([, v]) => v > 0);
   const sum = items.reduce((a, [, v]) => a + v, 0) || 1;
@@ -71,15 +72,21 @@ export function breakdownBar(parts, t, lang) {
     { class: 'legend' },
     all
       .sort((a, b) => b[1] - a[1])
-      .map(([k, v]) =>
-        el(
-          'li',
-          { class: v < 0 ? 'saving' : null },
+      .map(([k, v]) => {
+        const line = [
           el('i', { class: `part-${k}` }),
           el('span', { class: 'legend-name' }, v < 0 ? (t.sharesNegative[k] ?? t.shares[k]) : t.shares[k]),
           el('span', { class: 'legend-val' }, `${money(v, lang)} ${t.fields.price[1]}`),
-        ),
-      ),
+        ];
+        const cls =
+          [v < 0 ? 'saving' : null, why?.[k] ? 'explained' : null].filter(Boolean).join(' ') || null;
+        if (!why?.[k]) return el('li', { class: cls }, line);
+        return el(
+          'li',
+          { class: cls },
+          el('details', {}, el('summary', {}, line), el('p', { class: 'legend-why' }, why[k])),
+        );
+      }),
   );
   return { bar, legend };
 }
