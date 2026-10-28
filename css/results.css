@@ -192,6 +192,9 @@
   background: var(--part-tyres);
 }
 
+.part-repairs {
+  background: var(--part-repairs);
+}
 .part-washing {
   background: var(--part-washing);
 }

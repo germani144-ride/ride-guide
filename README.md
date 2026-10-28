@@ -17,9 +17,10 @@ The app has three tabs:
   2. Which car is it: make and model, model year, fuel (petrol, diesel or electric).
   3. How will you pay: pay upfront, finance or lease.
   4. The terms for that choice:
-     - pay upfront: price, market value (optional, if the car is worth more or less than you pay);
+     - pay upfront: price, market value (optional, if the car is worth more or less than you pay),
+       repairs right after buying (optional, e.g. a timing belt you know is due);
        loss in value is estimated (switch it off to type your own yearly rate)
-     - finance: price, market value, down payment (below 100%), ÅOP, loan period; loss in value
+     - finance: price, market value, repairs after buying, down payment (below 100%), ÅOP, loan period; loss in value
        as above
      - lease: monthly lease, one-time payment, return fee; whether the period is fixed (default)
        with its lease period, or flexible (a lease you can end early, such as a car
@@ -105,6 +106,7 @@ All prices are in today's money.
 | Loss in value | price paid − value at the end, spread evenly per month. The value starts from the market value (the price if none is given), so a good deal lowers the loss and a markup raises it; the loan and the money paid up front use the price. Value curve: −20% in the first year, then a yearly loss that shrinks with age: 6% + 9% × e^(−(age − 1) ÷ 4), so 15% in the second year, about 9% at 5 years and about 6–7% for cars over 10 (electric: −22%, then 7% + 10% × the same). The yearly rate goes up 1 point per 5,000 km above 15,000 km a year, and down when you drive less (limits 3–30%). Checked against TjekBil's market values for a 2016 car. A used car continues from its age (model year). Manual mode: value = market value ÷ (1 + yearly rate)^years. |
 | Money tied up in the car | equivalent monthly cost of (down payment + instalments + loan left at the end − sale value) at the return rate, minus loss in value and interest. Negative ("saved by paying later") when a cheap loan beats paying cash. |
 | Loan interest | interest paid within the span, spread per month. Instalments follow PMT(ÅOP ÷ 12, loan period, loan). |
+| Repairs after buying | as typed, paid when you get the car (in "Paid up front"), spread evenly per month; not part of the car's value or the loan. The return that money could have earned is under money tied up. |
 | Lease | monthly lease + the one-time payment at the start + the return fee at the end, over the lease's own period, discounted. |
 | Fuel / power | km per month ÷ km per unit × price, growing by the yearly price change. Prices are settings shared by every car: petrol 17.50 and diesel 19.50 kr per litre (October 2026), electricity 1.40 kr per kWh at home and 3.50 at public chargers (FDM 2026). Electric: 80% home + 20% public, and 10% extra use in the cold. |
 | Insurance | as typed, per month (insurers keep charging the same). |
@@ -116,7 +118,7 @@ All prices are in today's money.
 | Safety margin | owned cars only: 5% on top of everything else. |
 
 Results: **kr per km** = cost per month ÷ km per month. **Total** = cost per month × months.
-**Paid up front** = down payment (cash: the price) or the lease's one-time payment.
+**Paid up front** = down payment (cash: the price) plus repairs after buying, or the lease's one-time payment.
 **Paid out per month** = plain average of everything paid after the start (instalments, lease,
 running costs), without discounting or the sale.
 

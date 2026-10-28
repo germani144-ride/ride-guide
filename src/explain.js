@@ -72,6 +72,7 @@ export function explainParts(r, car, settings, t, lang) {
       set: kr(settings.tyreSetPrice),
       life: money(d.tyreLifeKm, lang),
     }) + (settings.winterTyres ? fmt(e.winterTyres, { swap: kr(settings.tyreSwapPrice) }) : '');
+  out.repairs = fmt(e.repairs, { amount: kr(car.upfrontRepairs), span });
   out.washing = fmt(e.washing, { amount: kr(settings.washingMo) });
   out.parking = fmt(e.asEntered, { amount: kr(car.parkingMo) });
   out.buffer = fmt(e.buffer, { pct: plain(settings.buffer * 100, lang) });

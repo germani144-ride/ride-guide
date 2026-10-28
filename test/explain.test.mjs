@@ -16,6 +16,15 @@ test('every line with an amount has an explanation, in both languages', () => {
       method: 'cash',
       fuel: 'petrol',
       year: 2016,
+      price: 86000,
+      marketValue: 90000,
+      upfrontRepairs: 36000,
+      kmPerUnit: 16,
+    }),
+    newCar({
+      method: 'cash',
+      fuel: 'petrol',
+      year: 2016,
       price: 124000,
       marketValue: 90000,
       kmPerUnit: 16,
@@ -83,4 +92,19 @@ test('the numbers in the explanations are the ones used', () => {
   assert.ok(Math.abs(r.parts.energy - (10000 / 12 / 16) * 17.5) < 1e-6);
   assert.match(why.washing, /^100 kr a month/);
   assert.match(why.buffer, /^A 5% safety margin/);
+});
+
+test('repairs after buying are explained with the amount entered', () => {
+  const car = newCar({
+    method: 'cash',
+    fuel: 'petrol',
+    year: 2016,
+    price: 86000,
+    marketValue: 90000,
+    upfrontRepairs: 36000,
+    kmPerUnit: 16,
+  });
+  const why = explainParts(run(car), car, settings, STRINGS.en, 'en');
+  assert.ok(why.repairs.startsWith('36,000 kr in repairs paid right after buying'));
+  assert.ok(why.depreciation.startsWith('You pay 86,000 kr. It is worth 90,000 kr now'));
 });

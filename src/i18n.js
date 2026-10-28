@@ -59,6 +59,11 @@ const en = {
       'kr',
       'What the car is worth, if not the price you pay (a good deal or a dealer markup). Its value over time and when you sell it start from here. Leave empty if it is the same as the price.',
     ],
+    upfrontRepairs: [
+      'Repairs right after buying',
+      'kr',
+      'Known repairs you pay for when you get the car, such as a timing belt or a clutch. Not part of its value or the loan. Leave empty if none.',
+    ],
     yearsOfUseLease: ['Lease period', 'years', 'You keep the car exactly this long.'],
     leaseMinYears: ['Shortest period', 'years', 'The least time you can lease it for.'],
     leaseMaxYears: ['Longest period', 'years', 'The most time you can lease it for.'],
@@ -142,7 +147,7 @@ const en = {
     curveAuto: ', following the estimated value curve for its age, fuel and km',
     curveManual: ', losing {rate}% a year as you entered',
     capital:
-      'The money in the car could have earned {rate}% a year (Settings). This is that lost return over {span}, after what you get back when you sell, per month.',
+      'The money you put into the car (price and any repairs) could have earned {rate}% a year (Settings). This is that lost return over {span}, after what you get back when you sell, per month.',
     capitalNegative:
       'With the loan you pay later, so your own money can earn {rate}% a year meanwhile (Settings). This is what that saves per month over {span}.',
     interest: 'Interest on the {loan} loan at {apr}% ÅOP: {total} over {span}, spread over {months} months.',
@@ -156,6 +161,7 @@ const en = {
     greenTax: '{half} per half year, as on the bill, ÷ 6.',
     maintenance:
       'Estimated for a {fuel} car driving {km} km a year: {base} a year when new, plus 8% of that for each year of age. It is {from} to {to} years old in this period, so about {avg} a year.',
+    repairs: '{amount} in repairs paid right after buying, as you entered, spread over {span}.',
     tyres: '{km} km a year at {set} for a set of tyres that lasts {life} km (Settings).',
     winterTyres: ' Plus two tyre swaps a year at {swap} each.',
     washing: '{amount} a month (Settings).',
@@ -168,6 +174,7 @@ const en = {
     greenTax: 'Green tax',
     insurance: 'Insurance',
     maintenance: 'Maintenance and repairs',
+    repairs: 'Repairs after buying',
     parking: 'Parking',
     lease: 'Lease',
     capital: 'Money tied up in the car',
@@ -340,6 +347,11 @@ const da = {
       'kr.',
       'Hvad bilen er værd, hvis det ikke er prisen, du betaler (en god handel eller et forhandlertillæg). Bilens værdi over tid og ved salg regnes herfra. Lad stå tom, hvis den er den samme som prisen.',
     ],
+    upfrontRepairs: [
+      'Reparationer lige efter køb',
+      'kr.',
+      'Kendte reparationer, du betaler, når du får bilen, fx tandrem eller kobling. Indgår ikke i bilens værdi eller lånet. Lad stå tom, hvis ingen.',
+    ],
     yearsOfUseLease: ['Leasingperiode', 'år', 'Du har bilen præcis så længe.'],
     leaseMinYears: ['Korteste periode', 'år', 'Det korteste, du kan lease den.'],
     leaseMaxYears: ['Længste periode', 'år', 'Det længste, du kan lease den.'],
@@ -424,7 +436,7 @@ const da = {
     curveAuto: ', efter den beregnede værdikurve for alder, drivmiddel og km',
     curveManual: ', med et værditab på {rate} % om året, som du har angivet',
     capital:
-      'Pengene i bilen kunne have givet {rate} % om året (Indstillinger). Det her er det tabte afkast over {span}, efter det du får tilbage ved salg, pr. måned.',
+      'Pengene, du har lagt i bilen (pris og eventuelle reparationer), kunne have givet {rate} % om året (Indstillinger). Det her er det tabte afkast over {span}, efter det du får tilbage ved salg, pr. måned.',
     capitalNegative:
       'Med lånet betaler du senere, så dine egne penge kan give {rate} % om året imens (Indstillinger). Det her er, hvad det sparer pr. måned over {span}.',
     interest:
@@ -439,6 +451,7 @@ const da = {
     greenTax: '{half} pr. halvår, som på opkrævningen, ÷ 6.',
     maintenance:
       'Beregnet for en {fuel}bil, der kører {km} km om året: {base} om året som ny, plus 8 % af det for hvert år, den bliver ældre. Den er {from} til {to} år gammel i perioden, så cirka {avg} om året.',
+    repairs: '{amount} i reparationer betalt lige efter køb, som du har angivet, fordelt over {span}.',
     tyres: '{km} km om året med {set} for et sæt dæk, der holder {life} km (Indstillinger).',
     winterTyres: ' Plus to dækskift om året til {swap} hver.',
     washing: '{amount} om måneden (Indstillinger).',
@@ -451,6 +464,7 @@ const da = {
     greenTax: 'Grøn ejerafgift',
     insurance: 'Forsikring',
     maintenance: 'Vedligehold og reparationer',
+    repairs: 'Reparationer efter køb',
     parking: 'Parkering',
     lease: 'Leasing',
     capital: 'Penge bundet i bilen',

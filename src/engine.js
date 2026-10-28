@@ -68,6 +68,7 @@ export const PART_KEYS = [
   'insurance',
   'greenTax',
   'maintenance',
+  'repairs',
   'tyres',
   'washing',
   'parking',
@@ -83,6 +84,8 @@ export const PART_KEYS = [
  * @property {number} [marketValue]     what the car is worth when you get it, if not the price
  *                                     (a good deal or a markup); the value curve and the sale
  *                                     at the end start from it. 0 or missing: the price
+ * @property {number} [upfrontRepairs]  known repairs paid when you get the car (owned cars); paid
+ *                                     up front, not part of the car's value or the loan
  * @property {number} downPayment       fraction of price paid up front (1 = cash)
  * @property {number} apr               ÅOP as a fraction
  * @property {number} financeMonths
@@ -260,12 +263,17 @@ export function calculate(input, settings = {}) {
   const parts = Object.fromEntries(PART_KEYS.map(key => [key, 0]));
   for (const key of Object.keys(pv)) parts[key] = eq(pv[key]);
   if (lease) parts.lease += eq(leaseFirst);
-  if (owned && price) {
-    // Capital cost split into the plain loss in value, loan interest, and what the money tied
-    // up in the car would have earned (negative when paying later beats paying now).
+  // Repairs paid right after buying: paid at the start, not part of the car's value or the loan.
+  const repairs = owned ? num(input.upfrontRepairs) : 0;
+  upfront += repairs;
+  if (owned && (price || repairs)) {
+    // Capital cost split into the plain loss in value, loan interest, repairs after buying (each
+    // simply spread per month), and what the money put into the car would have earned (negative
+    // when paying later beats paying now).
     parts.depreciation = (price - residual) / months;
     parts.interest = interestPaid / months;
-    parts.capital = eq(capitalPv) - parts.depreciation - parts.interest;
+    parts.repairs = repairs / months;
+    parts.capital = eq(capitalPv + repairs) - parts.depreciation - parts.interest - parts.repairs;
   }
   if (owned) {
     const before = PART_KEYS.reduce((a, key) => a + parts[key], 0);

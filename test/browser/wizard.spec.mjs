@@ -149,3 +149,26 @@ test('a market value different from the price sets the value at the end', async 
   const withMarket = await facts.locator('div', { hasText: 'Value after' }).locator('dd').textContent();
   expect(Math.abs(parse(withMarket) / parse(sameAsPrice) - 1.1)).toBeLessThan(0.001);
 });
+
+test('repairs right after buying get their own line and count as paid up front', async ({ page, app }) => {
+  await app.open('#/new');
+  await page.getByRole('button', { name: /Not yet/ }).click();
+  await page.locator('#f-name').fill('Mondeo');
+  await page.locator('#f-year').fill('2016');
+  await page.getByRole('button', { name: 'Next' }).click();
+  await page.getByRole('button', { name: /Pay upfront/ }).click();
+  await page.locator('#f-price').fill('86000');
+  await page.locator('#f-marketValue').fill('90000');
+  await page.locator('#f-upfrontRepairs').fill('36000');
+  await page.getByRole('button', { name: 'Next' }).click();
+  await page.locator('#f-kmPerUnit').fill('16');
+  await page.getByRole('button', { name: 'Next' }).click();
+  await page.getByRole('button', { name: 'Next' }).click();
+
+  await expect(page.locator('.facts').first()).toContainText('Paid up front122,000 kr');
+  const repairs = page.locator('.legend li', { hasText: 'Repairs after buying' });
+  await expect(repairs.locator('.legend-val')).toHaveText('1,000 kr'); // 36,000 kr over 3 years
+  await repairs.locator('summary').click();
+  await expect(repairs.locator('.legend-why')).toContainText('36,000 kr in repairs paid right after buying');
+  await expect(page.locator('.answers')).toContainText('Repairs right after buying36,000 kr');
+});

@@ -144,10 +144,11 @@ test('v2 data moves to v3: new switches on, the old 15% buffer becomes the new d
 
 test('switches decide which fields are asked', () => {
   const cash = newCar({ method: 'cash' });
-  assert.deepEqual(costFields(cash), ['price', 'marketValue']);
+  assert.deepEqual(costFields(cash), ['price', 'marketValue', 'upfrontRepairs']);
   assert.deepEqual(costFields({ ...cash, depreciationAuto: false }), [
     'price',
     'marketValue',
+    'upfrontRepairs',
     'depreciationFactor',
   ]);
   assert.ok(!runningFields(cash).includes('maintenanceMo'));
@@ -312,6 +313,14 @@ test('v7 data moves to v8: owned cars get a market value of 0, the same as the p
   assert.equal(s.cars[0].marketValue, 0);
   assert.equal(toEngineInput({ ...s.cars[0], marketValue: 90000 }).marketValue, 90000);
   assert.equal(toEngineInput({ ...s.cars[0], method: 'lease', marketValue: 90000 }).marketValue, 0);
-  assert.deepEqual(costFields(newCar({ method: 'cash' })), ['price', 'marketValue']);
+  assert.deepEqual(costFields(newCar({ method: 'cash' })), ['price', 'marketValue', 'upfrontRepairs']);
   assert.deepEqual(validate(newCar({ method: 'cash', price: 1 }), ['price', 'marketValue']), {}, 'optional');
+});
+
+test('v8 data moves to v9: owned cars get repairs after buying of 0', () => {
+  const s = migrate({ version: 8, cars: [{ name: 'C', method: 'cash', price: 86000, marketValue: 90000 }] });
+  assert.equal(s.version, STATE_VERSION);
+  assert.equal(s.cars[0].upfrontRepairs, 0);
+  assert.equal(toEngineInput({ ...s.cars[0], upfrontRepairs: 36000 }).upfrontRepairs, 36000);
+  assert.equal(toEngineInput({ ...s.cars[0], method: 'lease', upfrontRepairs: 36000 }).upfrontRepairs, 0);
 });

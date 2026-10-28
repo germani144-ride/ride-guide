@@ -291,3 +291,30 @@ test('market value: the value over time starts from it; what you paid is the cos
     'insurance share of value unchanged',
   );
 });
+
+test('repairs right after buying: paid up front, their own line, not in the value or the loan', () => {
+  const s = { ...bare, years: 2 };
+  const car = { ...noRunning, method: 'cash', price: 86000, marketValue: 90000 };
+  const without = calculate(car, s);
+  const withRepairs = calculate({ ...car, upfrontRepairs: 36000 }, s);
+  near(withRepairs.parts.repairs, 36000 / 24, 1e-6, 'spread over the period (paid at the start)');
+  near(withRepairs.parts.depreciation, without.parts.depreciation, 1e-9, 'loss in value unchanged');
+  near(withRepairs.residual, without.residual, 1e-9, 'value at the end unchanged');
+  assert.equal(withRepairs.upfront, 86000 + 36000, 'paid up front');
+  near(withRepairs.perMonth - without.perMonth, 36000 / 24, 1e-6, 'adds exactly the repairs');
+  const loan = calculate(
+    { ...car, method: 'finance', downPayment: 0, apr: 0.05, financeMonths: 60, upfrontRepairs: 36000 },
+    s,
+  );
+  assert.equal(loan.upfront, 36000, 'not borrowed');
+  assert.equal(
+    calculate({ ...noRunning, method: 'lease', leaseMo: 1, upfrontRepairs: 36000 }, s).parts.repairs,
+    0,
+  );
+  // With a return on money: the repairs line stays a plain split; the lost return goes to money tied up.
+  const r4 = { ...s, returnRate: 0.04 };
+  const a = calculate(car, r4);
+  const b = calculate({ ...car, upfrontRepairs: 36000 }, r4);
+  near(b.parts.repairs, 36000 / 24, 1e-9, 'plain split');
+  assert.ok(b.parts.capital > a.parts.capital, 'lost return on the repairs money');
+});
