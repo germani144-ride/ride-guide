@@ -76,6 +76,7 @@ export function renderResult(ctx, draft) {
 
 export function answers(car, t, lang, onChange) {
   const val = f => {
+    if (f === 'marketValue' && !car.marketValue) return t.result.sameAsPrice;
     const unit = t.fields[labelKey(f, car)][1];
     const n = toShown(f, car[f]);
     return `${plain(n, lang)}${unit ? ` ${unit}` : ''}`;

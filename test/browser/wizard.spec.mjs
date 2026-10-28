@@ -121,3 +121,31 @@ test('a flexible lease asks its shortest and longest period and stays within the
   );
   await expect(page.locator('.facts').first()).toContainText('Paid up front5,000 kr');
 });
+
+test('a market value different from the price sets the value at the end', async ({ page, app }) => {
+  await app.open('#/new');
+  await page.getByRole('button', { name: /Not yet/ }).click();
+  await page.locator('#f-name').fill('Good Deal');
+  await page.locator('#f-year').fill('2026');
+  await page.getByRole('button', { name: 'Next' }).click();
+  await page.getByRole('button', { name: /Pay upfront/ }).click();
+  await page.locator('#f-price').fill('200000');
+  await page.getByRole('button', { name: 'Next' }).click();
+  await page.locator('#f-kmPerUnit').fill('16');
+  await page.getByRole('button', { name: 'Next' }).click();
+  await page.getByRole('button', { name: 'Next' }).click();
+  const facts = page.locator('.facts').first();
+  const sameAsPrice = await facts.locator('div', { hasText: 'Value after' }).locator('dd').textContent();
+  await expect(page.locator('.answers')).toContainText('Market valueSame as the price');
+
+  // Change the payment answers: same price, but the car is worth 10% more.
+  await page.locator('.answer-group').nth(1).getByRole('button', { name: 'Change' }).click();
+  await page.locator('button.choice', { hasText: 'Pay upfront' }).click();
+  await page.locator('#f-marketValue').fill('220000');
+  await page.getByRole('button', { name: 'Next' }).click();
+  await expect(page.locator('.answers')).toContainText('Market value220,000 kr');
+  await expect(facts).toContainText('Paid up front200,000 kr');
+  const parse = s => Number(s.replace(/[^\d]/g, ''));
+  const withMarket = await facts.locator('div', { hasText: 'Value after' }).locator('dd').textContent();
+  expect(Math.abs(parse(withMarket) / parse(sameAsPrice) - 1.1)).toBeLessThan(0.001);
+});

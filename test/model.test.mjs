@@ -144,8 +144,12 @@ test('v2 data moves to v3: new switches on, the old 15% buffer becomes the new d
 
 test('switches decide which fields are asked', () => {
   const cash = newCar({ method: 'cash' });
-  assert.deepEqual(costFields(cash), ['price']);
-  assert.deepEqual(costFields({ ...cash, depreciationAuto: false }), ['price', 'depreciationFactor']);
+  assert.deepEqual(costFields(cash), ['price', 'marketValue']);
+  assert.deepEqual(costFields({ ...cash, depreciationAuto: false }), [
+    'price',
+    'marketValue',
+    'depreciationFactor',
+  ]);
   assert.ok(!runningFields(cash).includes('maintenanceMo'));
   assert.ok(runningFields({ ...cash, maintenanceAuto: false }).includes('maintenanceMo'));
   const lease = newCar({ method: 'lease', maintenanceAuto: false });
@@ -283,7 +287,7 @@ test('a lease asks its period, or its shortest and longest period', () => {
 
 test('v6 data moves to v7: existing leases become fixed with their period', () => {
   const s = migrate({ version: 6, cars: [{ name: 'L', method: 'lease', leaseMo: 3000, yearsOfUse: 2 }] });
-  assert.equal(s.version, 7);
+  assert.equal(s.version, STATE_VERSION);
   assert.equal(s.cars[0].leaseFixed, true);
   assert.equal(s.cars[0].yearsOfUse, 2);
   assert.deepEqual([s.cars[0].leaseMinYears, s.cars[0].leaseMaxYears], [1, 3]);
@@ -300,4 +304,14 @@ test('which years a lease can run', () => {
     [1, 2, 3, 4, 5].map(y => leaseAllowsYears(flex, y)),
     [false, true, true, true, false],
   );
+});
+
+test('v7 data moves to v8: owned cars get a market value of 0, the same as the price', () => {
+  const s = migrate({ version: 7, cars: [{ name: 'C', method: 'cash', price: 100000 }] });
+  assert.equal(s.version, STATE_VERSION);
+  assert.equal(s.cars[0].marketValue, 0);
+  assert.equal(toEngineInput({ ...s.cars[0], marketValue: 90000 }).marketValue, 90000);
+  assert.equal(toEngineInput({ ...s.cars[0], method: 'lease', marketValue: 90000 }).marketValue, 0);
+  assert.deepEqual(costFields(newCar({ method: 'cash' })), ['price', 'marketValue']);
+  assert.deepEqual(validate(newCar({ method: 'cash', price: 1 }), ['price', 'marketValue']), {}, 'optional');
 });

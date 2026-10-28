@@ -246,3 +246,40 @@ test('fuel and electricity prices come from the settings when the car has none',
   near(calculate({ ...car, fuel: 'diesel' }, s).parts.energy, 1200, 1e-9, 'diesel');
   near(calculate({ ...car, fuel: 'electric' }, s).parts.energy, 200, 1e-9, 'electric at home');
 });
+
+test('market value: the value over time starts from it; what you paid is the cost', () => {
+  const s = { ...bare, years: 3 };
+  const car = { ...noRunning, method: 'cash', price: 200000 };
+  const same = calculate(car, s);
+  const deal = calculate({ ...car, marketValue: 220000 }, s); // bought below market value
+  near(deal.residual, same.residual * 1.1, 1e-6, 'sale value from the market value');
+  near(deal.parts.depreciation, (200000 - deal.residual) / 36, 1e-6, 'loss = paid minus sold');
+  assert.ok(deal.perMonth < same.perMonth, 'a good deal costs less');
+  const markup = calculate({ ...car, marketValue: 180000 }, s); // paid over market value
+  assert.ok(markup.perMonth > same.perMonth, 'a markup costs more');
+  assert.equal(markup.upfront, 200000, 'you still pay the price');
+  near(
+    calculate({ ...car, marketValue: 0 }, s).perMonth,
+    same.perMonth,
+    1e-9,
+    '0 means the same as the price',
+  );
+  // A loan is on the price paid, not the market value.
+  const loan = { ...car, method: 'finance', downPayment: 0, apr: 0.06, financeMonths: 60 };
+  near(
+    calculate({ ...loan, marketValue: 150000 }, s).interestPaid,
+    calculate(loan, s).interestPaid,
+    1e-9,
+    'loan on the price',
+  );
+  // Manual mode starts from the market value too; insurance follows the value from it.
+  const manual = { ...car, depreciationAuto: false, depreciationFactor: 0.1, marketValue: 100000 };
+  near(calculate(manual, s).residual, 100000 / 1.1 ** 3, 1e-6, 'manual residual');
+  const insured = calculate({ ...car, insuranceMo: 600, marketValue: 220000 }, s).parts.insurance;
+  near(
+    insured,
+    calculate({ ...car, insuranceMo: 600 }, s).parts.insurance,
+    1e-9,
+    'insurance share of value unchanged',
+  );
+});

@@ -4,7 +4,7 @@ import { DEFAULT_SETTINGS } from './engine.js';
 // A saved car keeps every number it has ever been given, so switching payment method and back
 // loses nothing. toEngineInput() decides which numbers count for the chosen method.
 
-export const STATE_VERSION = 7;
+export const STATE_VERSION = 8;
 export const METHODS = ['cash', 'finance', 'lease'];
 export const FUELS = ['petrol', 'diesel', 'electric'];
 
@@ -18,6 +18,7 @@ export const NUMBER_FIELDS = [
   'year',
   'yearsOfUse',
   'price',
+  'marketValue',
   'downPayment',
   'apr',
   'financeMonths',
@@ -55,8 +56,8 @@ export function switchOn(car, key) {
 // Fields asked for on the payment step, per method. How long you keep an owned car is the
 // shared time span in Settings, so it is no longer asked per car; a lease asks its period.
 export const COST_FIELDS = {
-  cash: ['price'],
-  finance: ['price', 'downPayment', 'apr', 'financeMonths'],
+  cash: ['price', 'marketValue'],
+  finance: ['price', 'marketValue', 'downPayment', 'apr', 'financeMonths'],
   lease: ['leaseMo', 'oneTimePayment', 'returnFee'],
 };
 // Km per year, years of ownership and fuel and electricity prices are shared by all cars
@@ -125,6 +126,7 @@ export function newCar(overrides = {}) {
     year: 0,
     yearsOfUse: 3,
     price: 0,
+    marketValue: 0, // 0: the same as the price
     downPayment: 1,
     apr: 0,
     financeMonths: 0,
@@ -196,6 +198,7 @@ export function toEngineInput(
     fuel: car.fuel,
     age: car.year > 1900 ? Math.max(0, year - car.year) : 0,
     price: lease ? 0 : car.price,
+    marketValue: lease ? 0 : car.marketValue,
     downPayment: car.method === 'finance' ? car.downPayment : 1,
     apr: car.method === 'finance' ? car.apr : 0,
     financeMonths: car.method === 'finance' ? car.financeMonths : 0,
@@ -251,6 +254,7 @@ export function migrate(raw, fallbackLang = 'en') {
     if (raw.settings?.petrolPrice === 13.69) state.settings.petrolPrice = DEFAULT_SETTINGS.petrolPrice;
     if (raw.settings?.dieselPrice === 13.29) state.settings.dieselPrice = DEFAULT_SETTINGS.dieselPrice;
   }
+  // v8: owned cars have a market value (0 = the same as the price), filled in by sanitizeCar().
   // v7: leases are fixed (their own period) or flexible (shortest and longest period). Older
   // leases had one period, so they become fixed; sanitizeCar() fills in the new fields.
   state.cars = raw.cars.slice(0, 500).map(sanitizeCar);

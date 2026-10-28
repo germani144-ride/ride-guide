@@ -72,6 +72,7 @@ test('each step asks its fields and switches, in order', () => {
   // A switch comes right before the fields it reveals.
   assert.deepEqual(stepItems('cost', { ...cash, depreciationAuto: false }), [
     { field: 'price' },
+    { field: 'marketValue' },
     { switch: 'depreciationAuto' },
     { field: 'depreciationFactor' },
   ]);

@@ -82,12 +82,15 @@ export const PART_KEYS = [
  * @property {'cash'|'finance'|'lease'} method
  * @property {'petrol'|'diesel'|'electric'} fuel
  * @property {number} age               car's age in years when you get it (0 = new)
- * @property {number} price             purchase price (owned cars)
+ * @property {number} price             purchase price (owned cars): what you pay, and borrow against
+ * @property {number} [marketValue]     what the car is worth when you get it, if not the price
+ *                                     (a good deal or a markup); the value curve and the sale
+ *                                     at the end start from it. 0 or missing: the price
  * @property {number} downPayment       fraction of price paid up front (1 = cash)
  * @property {number} apr               ÅOP as a fraction
  * @property {number} financeMonths
  * @property {boolean} depreciationAuto use the value curve; otherwise depreciationFactor
- * @property {number} depreciationFactor yearly loss for the manual mode: value = price / (1+f)^years
+ * @property {number} depreciationFactor yearly loss for the manual mode: value = market value / (1+f)^years
  * @property {number} leaseMo
  * @property {number} oneTimePayment   paid when the lease starts
  * @property {number} returnFee        paid when the car is handed back, at the end
@@ -162,11 +165,14 @@ export function calculate(input, settings = {}) {
   const kmMo = kmYear / 12;
   const age0 = Math.max(0, num(input.age));
   const price = owned ? num(input.price) : 0;
+  const marketValue = owned ? num(input.marketValue) || price : 0;
 
+  // The car's value over time starts from its market value (what you pay may differ).
   const valueAt = years => {
-    if (!price) return 0;
-    if (input.depreciationAuto === false) return price / Math.pow(1 + num(input.depreciationFactor), years);
-    return (price * valueCurve(fuel, kmYear, age0 + years)) / valueCurve(fuel, kmYear, age0);
+    if (!marketValue) return 0;
+    if (input.depreciationAuto === false)
+      return marketValue / Math.pow(1 + num(input.depreciationFactor), years);
+    return (marketValue * valueCurve(fuel, kmYear, age0 + years)) / valueCurve(fuel, kmYear, age0);
   };
 
   const pv = {}; // value today of each part
@@ -235,7 +241,9 @@ export function calculate(input, settings = {}) {
 
     const ins = num(input.insuranceMo);
     const insShare =
-      owned && price ? 1 - INSURANCE_VALUE_SHARE + (INSURANCE_VALUE_SHARE * valueAt(mid)) / price : 1;
+      owned && marketValue
+        ? 1 - INSURANCE_VALUE_SHARE + (INSURANCE_VALUE_SHARE * valueAt(mid)) / marketValue
+        : 1;
     add('insurance', ins * insShare, k);
     add('greenTax', num(input.greenTaxMo), k);
     add('parking', num(input.parkingMo), k);

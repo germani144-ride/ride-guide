@@ -17,8 +17,10 @@ The app has three tabs:
   2. Which car is it: make and model, model year, fuel (petrol, diesel or electric).
   3. How will you pay: pay upfront, finance or lease.
   4. The terms for that choice:
-     - pay upfront: price; loss in value is estimated (switch it off to type your own yearly rate)
-     - finance: price, down payment (below 100%), ÅOP, loan period; loss in value as above
+     - pay upfront: price, market value (optional, if the car is worth more or less than you pay);
+       loss in value is estimated (switch it off to type your own yearly rate)
+     - finance: price, market value, down payment (below 100%), ÅOP, loan period; loss in value
+       as above
      - lease: monthly lease, one-time payment, return fee; whether the period is fixed (default)
        with its lease period, or flexible (a lease you can end early, such as a car
        subscription) with its shortest and longest period; and switches for "service included"
@@ -99,7 +101,7 @@ All prices are in today's money.
 
 | Part | How it is calculated |
 |---|---|
-| Loss in value | price − value at the end, spread evenly per month. Value curve: −20% in the first year, then a yearly loss that shrinks with age: 6% + 9% × e^(−(age − 1) ÷ 4), so 15% in the second year, about 9% at 5 years and about 6–7% for cars over 10 (electric: −22%, then 7% + 10% × the same). The yearly rate goes up 1 point per 5,000 km above 15,000 km a year, and down when you drive less (limits 3–30%). Checked against TjekBil's market values for a 2016 car. A used car continues from its age (model year). Manual mode: value = price ÷ (1 + yearly rate)^years. |
+| Loss in value | price paid − value at the end, spread evenly per month. The value starts from the market value (the price if none is given), so a good deal lowers the loss and a markup raises it; the loan and the money paid up front use the price. Value curve: −20% in the first year, then a yearly loss that shrinks with age: 6% + 9% × e^(−(age − 1) ÷ 4), so 15% in the second year, about 9% at 5 years and about 6–7% for cars over 10 (electric: −22%, then 7% + 10% × the same). The yearly rate goes up 1 point per 5,000 km above 15,000 km a year, and down when you drive less (limits 3–30%). Checked against TjekBil's market values for a 2016 car. A used car continues from its age (model year). Manual mode: value = market value ÷ (1 + yearly rate)^years. On owned cars, the part of insurance that follows the value follows it from the market value. |
 | Money tied up in the car | equivalent monthly cost of (down payment + instalments + loan left at the end − sale value) at the return rate, minus loss in value and interest. Negative ("saved by paying later") when a cheap loan beats paying cash. |
 | Loan interest | interest paid within the span, spread per month. Instalments follow PMT(ÅOP ÷ 12, loan period, loan). |
 | Lease | monthly lease + the one-time payment at the start + the return fee at the end, over the lease's own period, discounted. |
