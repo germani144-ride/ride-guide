@@ -146,7 +146,15 @@ saved, so switching back loses nothing).
 - **Look up a car by its plate**: green tax, fuel use, and ideally market value.
 - **Today's Danish fuel and electricity prices**, fetched automatically instead of typed in
   Settings (they vary a lot). Needs a price source the app may call from the browser.
-- **Survival model for maintenance**, from Pedro's own algorithms, replacing the maintenance curve.
+- **Service plan for your own cars** (Garage): from the odometer reading, the last service and
+  your km per year, show what is due and roughly when (e.g. "around March 2027, 60,000 km: oil
+  and oil filter, air filter"), starting from a general schedule by fuel type that you can edit
+  from the car's service book. A "Due soon" note in the app and an "Add to calendar" button for
+  reminders (true push notifications would need a server).
+- **Predictive maintenance, later**: once there is real repair data (for example from logging
+  repairs with date, km and cost in the app), a survival model (Kaplan-Meier, Cox) can replace
+  the maintenance curve. The MSc repo (Germani144/vehicle-maintenance) has no survival analysis
+  and its Brazil data is made up, so it is not used.
 - **Car sharing as a way to pay** (Hyre, GreenMobility and the like), next to lease, cash and
   finance. Kept simple so it fits every service's pricing (per day, per minute, prepaid): a monthly
   subscription fee plus your typical usage cost per month (trips, and fuel or charging if not
