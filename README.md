@@ -147,6 +147,10 @@ saved, so switching back loses nothing).
 - **Today's Danish fuel and electricity prices**, fetched automatically instead of typed in
   Settings (they vary a lot). Needs a price source the app may call from the browser.
 - **Survival model for maintenance**, from Pedro's own algorithms, replacing the maintenance curve.
+- **Car sharing as a way to pay** (Hyre, GreenMobility and the like), next to lease, cash and
+  finance. Kept simple so it fits every service's pricing (per day, per minute, prepaid): a monthly
+  subscription fee plus your typical usage cost per month (trips, and fuel or charging if not
+  included). A per-day or per-minute calculator can come later if it matters.
 
 ## How it works
 
