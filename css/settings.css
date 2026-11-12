@@ -23,3 +23,12 @@
   justify-content: center;
   margin: 4px 0 16px;
 }
+
+/* "Fetch latest" at the top of Fuel and electricity. */
+.fetch-latest .actions {
+  margin-top: 10px;
+}
+
+.fetch-latest .price-status .hint {
+  margin-top: 8px;
+}

@@ -136,12 +136,13 @@ export function renderSettings(ctx) {
     },
   });
 
-  const section = key =>
+  const section = (key, top = null) =>
     el(
       'section',
       { class: 'setting' },
       el('h2', {}, ts.groups[key][0]),
       ts.groups[key][1] ? el('p', { class: 'hint' }, ts.groups[key][1]) : null,
+      top,
       GROUPS[key].map(field),
     );
 
@@ -160,7 +161,7 @@ export function renderSettings(ctx) {
     ),
     section('money'),
     section('running'),
-    section('energy'),
+    section('energy', fetchLatest(ctx)),
     pricesSection(ctx),
     plateSection(ctx),
     el(
@@ -180,8 +181,8 @@ export function renderSettings(ctx) {
   );
 }
 
-// Today's prices: automatic updates, the electricity price area and add-on, and what was fetched.
-function pricesSection(ctx) {
+// "Fetch latest" at the top of Fuel and electricity, with what was fetched and when.
+function fetchLatest(ctx) {
   const { state } = ctx;
   const lang = state.lang;
   const p = state.prices;
@@ -206,6 +207,46 @@ function pricesSection(ctx) {
     return lines;
   };
 
+  const btn = el(
+    'button',
+    {
+      type: 'button',
+      class: 'secondary',
+      onclick: async () => {
+        btn.disabled = true;
+        btn.textContent = tp.fetching;
+        const got = await ctx.updatePrices({ force: true });
+        const found = [got?.petrol, got?.diesel, got?.spot].filter(v => v != null).length;
+        toast(found === 3 ? tp.done : found ? tp.partial : tp.failed);
+        if (!found) {
+          btn.disabled = false;
+          btn.textContent = tp.fetch;
+        }
+      },
+    },
+    tp.fetch,
+  );
+
+  return el(
+    'div',
+    { class: 'fetch-latest' },
+    el('div', { class: 'actions' }, btn),
+    el(
+      'div',
+      { class: 'price-status', role: 'status' },
+      status().map(line => el('p', { class: 'hint' }, line)),
+    ),
+  );
+}
+
+// Today's prices: automatic updates, the electricity price area and the add-on.
+function pricesSection(ctx) {
+  const { state } = ctx;
+  const lang = state.lang;
+  const p = state.prices;
+  const s = state.settings;
+  const tp = ctx.t.settings.prices;
+
   const area = el(
     'div',
     { class: 'segmented', role: 'radiogroup', 'aria-label': tp.area },
@@ -228,26 +269,6 @@ function pricesSection(ctx) {
         tp.areas[a],
       ),
     ),
-  );
-
-  const btn = el(
-    'button',
-    {
-      type: 'button',
-      class: 'secondary',
-      onclick: async () => {
-        btn.disabled = true;
-        btn.textContent = tp.fetching;
-        const got = await ctx.updatePrices({ force: true });
-        const found = [got?.petrol, got?.diesel, got?.spot].filter(v => v != null).length;
-        toast(found === 3 ? tp.done : found ? tp.partial : tp.failed);
-        if (!found) {
-          btn.disabled = false;
-          btn.textContent = tp.fetch;
-        }
-      },
-    },
-    tp.fetch,
   );
 
   return el(
@@ -309,12 +330,6 @@ function pricesSection(ctx) {
       ),
       el('p', { class: 'hint' }, tp.addOnHint),
     ),
-    el(
-      'div',
-      { class: 'price-status', role: 'status' },
-      status().map(line => el('p', { class: 'hint' }, line)),
-    ),
-    el('div', { class: 'actions' }, btn),
     el('p', { class: 'hint' }, tp.credit),
   );
 }

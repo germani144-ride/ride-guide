@@ -300,13 +300,13 @@ const en = {
       title: "Today's prices",
       auto: 'Update prices automatically',
       autoHint:
-        "Once a day, petrol, diesel and home electricity above are replaced by today's prices. Turn off to keep your own.",
+        "Once a day, petrol, diesel and home electricity above are replaced by today's prices. Turn off to keep your own; Fetch latest still works.",
       area: 'Electricity price area',
       areas: { DK1: 'DK1, west', DK2: 'DK2, east' },
       addOn: 'On top of the spot price',
       addOnHint:
         "Grid tariffs, electricity tax and your supplier's fee per kWh, incl. VAT. Find them on your electricity bill.",
-      fetch: "Get today's prices",
+      fetch: 'Fetch latest',
       fetching: 'Getting prices…',
       never: 'Not fetched yet.',
       updated: 'Updated {when}.',
@@ -644,13 +644,13 @@ const da = {
       title: 'Dagens priser',
       auto: 'Opdatér priser automatisk',
       autoHint:
-        'En gang om dagen erstattes benzin, diesel og el derhjemme ovenfor af dagens priser. Slå fra for at beholde dine egne.',
+        'En gang om dagen erstattes benzin, diesel og el derhjemme ovenfor af dagens priser. Slå fra for at beholde dine egne; Hent seneste virker stadig.',
       area: 'Elprisområde',
       areas: { DK1: 'DK1, vest', DK2: 'DK2, øst' },
       addOn: 'Oven i spotprisen',
       addOnHint:
         'Nettarif, elafgift og dit elselskabs tillæg pr. kWh, inkl. moms. Du finder dem på din elregning.',
-      fetch: 'Hent dagens priser',
+      fetch: 'Hent seneste',
       fetching: 'Henter priser…',
       never: 'Ikke hentet endnu.',
       updated: 'Opdateret {when}.',

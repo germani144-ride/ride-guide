@@ -70,7 +70,8 @@ all work. The license plate is stored with the car.
 Petrol, diesel and home electricity follow today's Danish prices by themselves: once a day (when
 the last prices are over 12 hours old) the app fetches them in the background and puts them in
 Settings, and every car's cost follows. **Settings → Today's prices** has the switch (turn it off
-to keep prices you typed), the electricity price area, the add-on below and a button to fetch now.
+to keep prices you typed), the electricity price area and the add-on below; **Fetch latest**, at the top of Fuel and
+electricity, fetches right away (also with automatic updates off) and shows what was fetched.
 Neither source needs a key.
 
 - **Petrol and diesel**: OK's public price list (`mobility-prices.ok.dk`), the pump price at every

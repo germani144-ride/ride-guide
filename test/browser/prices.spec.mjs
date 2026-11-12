@@ -58,10 +58,29 @@ test.describe('when the price sources cannot be reached', () => {
   test('the button says so and the prices stay as they were', async ({ page, app }) => {
     await app.open('#/settings');
     await app.prices({ petrol: 99, status: 503 });
-    await page.getByRole('button', { name: "Get today's prices" }).click();
+    await page.getByRole('button', { name: 'Fetch latest' }).click();
     await expect(page.locator('.toast')).toHaveText(
       "Couldn't get today's prices. Check the connection and try again.",
     );
     await expect(page.locator('#set-petrolPrice')).toHaveValue('17.5');
   });
+});
+
+test('Fetch latest sits in Fuel and electricity and works with automatic updates off', async ({
+  page,
+  app,
+}) => {
+  await app.open('#/settings');
+  await page.locator('label[for="set-pricesAuto"]').click();
+  const energy = page.locator('section.setting', {
+    has: page.getByRole('heading', { name: 'Fuel and electricity' }),
+  });
+  await expect(energy.getByRole('button', { name: 'Fetch latest' })).toBeVisible();
+  await app.prices({ petrol: 14.79, diesel: 13.59, spot: 600 });
+  await energy.getByRole('button', { name: 'Fetch latest' }).click();
+  await expect(page.locator('.toast')).toHaveText('Prices updated');
+  await expect(page.locator('#set-petrolPrice')).toHaveValue('14.79');
+  await expect(page.locator('#set-dieselPrice')).toHaveValue('13.59');
+  await expect(page.locator('#set-homeElPrice')).toHaveValue('1.3');
+  await expect(page.locator('.price-status')).toContainText('Petrol 14.79 and diesel 13.59');
 });
