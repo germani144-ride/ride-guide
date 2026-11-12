@@ -74,6 +74,14 @@ to keep prices you typed), the electricity price area and the add-on below; **Fe
 electricity, fetches right away (also with automatic updates off) and shows what was fetched.
 Neither source needs a key.
 
+Neither source lets a web app on another address read it (no CORS), so the phone never calls
+them. A GitHub Action, [`.github/workflows/prices.yml`](.github/workflows/prices.yml), runs
+`scripts/fetch-prices.mjs` twice a day (05:17 and 13:17 Danish winter time, and on request from
+the Actions tab): it asks both sources, writes `prices.json` in the repository root and commits
+it if it changed. GitHub Pages serves that file next to the app, and the app reads it from its own
+address. `prices.json` holds `{ updatedAt, petrol, diesel, spot: { DK1, DK2 } }` (kr per litre;
+spot in kr per kWh excl. VAT, 30-day average); a source that fails keeps its last value.
+
 - **Petrol and diesel**: OK's public price list (`mobility-prices.ok.dk`), the pump price at every
   OK station. RideGuide uses the median across stations of "Blyfri 95" and "Diesel" (premium and
   HVO products are left out). Danish chains' prices move together, so one chain is a fair guide.
@@ -84,7 +92,8 @@ Neither source needs a key.
   0.68 × 1.25 + 0.55 = 1.40 kr per kWh.
 - **Public charging** has no open price source, so it stays as typed.
 
-If a source can't be reached, its prices stay as they were and the app tries again next time.
+If the file can't be read (offline), the prices stay as they were and the app tries again next
+time.
 
 ### Plate lookup
 
@@ -232,8 +241,11 @@ src/explain.js                how each part of the cost is calculated, in words 
 src/plate-data.js             plate lookup: the address, reading the answer, filling in the car
 src/lookup.js                 plate lookup: the call to nummerplade-tjek.dk
 src/green-tax.js              green tax from the official rate tables (updated each January)
-src/prices.js                 today's prices: the sources, reading them, the home electricity price
-src/price-fetch.js            today's prices: the calls to OK and Energi Data Service
+src/prices.js                 today's prices: the sources, prices.json, the home electricity price
+src/price-fetch.js            today's prices: reads prices.json
+scripts/fetch-prices.mjs      run by the GitHub Action: asks the sources, writes prices.json
+.github/workflows/prices.yml  the GitHub Action: twice a day, commits prices.json
+prices.json                   today's prices, written by the GitHub Action (don't edit by hand)
 src/engine.js                 the cost engine
 src/engine-sheet.js           sheet mode: the spreadsheet's formulas (tests only)
 src/model.js                  the car record, payment methods, settings, migrate(), validation
@@ -301,15 +313,16 @@ same `load()` and `save()`. When the shape of saved data changes, `STATE_VERSION
     diesel, electric, missing pieces, green tax), the message for each failure, and the stored key.
   - `test/green-tax.test.mjs`: green tax for each table, at the boundaries, diesel extras, and
     no guess when the figures are missing.
-  - `test/prices.test.mjs`: today's prices: the median pump price, the spot average, the home
-    electricity price, when to fetch again, and the data upgrade.
+  - `test/prices.test.mjs`: today's prices: the median pump price, the spot average, building
+    and reading `prices.json`, the home electricity price, when to fetch again, and the data
+    upgrade.
 - Browser tests (`npm run test:browser`, Playwright, Pixel 7 emulation): adding a car (cash and
   lease), History, the years and km bars, the comparison, a car's page, Settings (saving,
   reload, update check), English and Danish, starting offline, and the plate lookup (the test
 plays the lookup service: a car found, a plate not found, no key, and the key staying out of a
 backup), and today's prices (fetched by themselves, the add-on and price area, automatic updates
-off, a source that can't be reached). Every test plays the two price sources with prices equal
-to the defaults, so no test reaches the internet. The date is fixed so the
+off, the file can't be read). Every test plays `prices.json` with prices equal to the defaults,
+so no test reaches the internet. The date is fixed so the
   expected numbers stay put, and any console error, including a Content-Security-Policy
   violation, fails the test.
 
@@ -330,13 +343,12 @@ The pieces that would change for a commercial version are kept separate:
 
 ## Security
 
-Your cars and settings stay on the phone. RideGuide sends out only two things: a plate lookup,
-if you added a lookup key (the plate and your key go to `nummerplade-tjek.dk`), and the request
-for today's prices, which carries nothing about you (to `mobility-prices.ok.dk` and
-`api.energidataservice.dk`; the price area is the only choice it includes).
+Your cars and settings stay on the phone. RideGuide sends out only one thing: a plate lookup,
+if you added a lookup key (the plate and your key go to `nummerplade-tjek.dk`). Today's prices
+come from `prices.json` on the app's own address.
 `index.html` sets a strict Content-Security-Policy: scripts, styles, fonts and images may only
-come from RideGuide's own address, and network requests may only go there or to those three
-addresses, so no injected or third-party script can run or send data
+come from RideGuide's own address, and network requests may only go there or to
+`nummerplade-tjek.dk`, so no injected or third-party script can run or send data
 elsewhere. Keep it that way: no inline `<script>` blocks or `onclick="…"` attributes (put code in
 `src/`), and if a feature ever needs another address (a price service), add exactly that address
 to `connect-src` in the policy. No key or token is ever committed to this repository.

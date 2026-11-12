@@ -1,31 +1,20 @@
-// Today's prices, the network part: asks OK (petrol, diesel) and Energi Data Service (spot
-// electricity) at the same time. Neither needs a key. Resolves to { petrol, diesel, spot }, each
-// null if that source failed; never throws.
-import { OK_URL, spotUrl, fuelFromOk, spotFromEds } from './prices.js';
+// Today's prices, the network part: reads prices.json from the app's own address. The GitHub
+// Action writes it twice a day (see src/prices.js for why the phone doesn't ask the sources).
+// Resolves to { petrol, diesel, spot }, each null if missing; never throws.
+import { readPricesFile } from './prices.js';
 
 const TIMEOUT_MS = 10000;
 
-async function getJson(url) {
+export async function fetchPrices(area) {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
   try {
-    const res = await fetch(url, {
-      headers: { Accept: 'application/json' },
-      credentials: 'omit',
-      referrerPolicy: 'no-referrer',
-      cache: 'no-store',
-      signal: ctrl.signal,
-    });
-    return res.ok ? await res.json() : null;
+    // '?check=' makes the service worker leave it alone, so this is always today's file.
+    const res = await fetch(`./prices.json?check=${Date.now()}`, { cache: 'no-store', signal: ctrl.signal });
+    return readPricesFile(res.ok ? await res.json() : null, area);
   } catch {
-    return null; // offline, timed out, or blocked
+    return readPricesFile(null, area); // offline or timed out
   } finally {
     clearTimeout(timer);
   }
-}
-
-export async function fetchPrices(area) {
-  const [ok, eds] = await Promise.all([getJson(OK_URL), getJson(spotUrl(area))]);
-  const fuel = ok ? fuelFromOk(ok) : { petrol: null, diesel: null };
-  return { ...fuel, spot: eds ? spotFromEds(eds) : null };
 }

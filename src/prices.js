@@ -1,6 +1,10 @@
 // Today's fuel and electricity prices, the plain part: where to ask, how to read the answers and
-// how to turn them into the prices RideGuide uses. No DOM, storage or network; src/price-fetch.js
-// makes the calls.
+// how to turn them into the prices RideGuide uses. No DOM, storage or network.
+//
+// Neither source lets a web app on another address read it (no CORS; found 2026-11-12), so the
+// phone never calls them. A GitHub Action (.github/workflows/prices.yml, running
+// scripts/fetch-prices.mjs twice a day) asks both and writes prices.json next to the app, built by
+// pricesFile() below; the app reads that file from its own address (src/price-fetch.js).
 //
 // - Petrol and diesel: OK's public price list (no key), the pump price at every OK station. We
 //   take the median across stations, a typical Danish pump price (chains move together).
@@ -92,6 +96,36 @@ export function spotFromEds(json) {
     .filter(v => Number.isFinite(v));
   if (!values.length) return null;
   return values.reduce((a, b) => a + b, 0) / values.length / 1000;
+}
+
+// The file the GitHub Action writes: { updatedAt, petrol, diesel, spot: { DK1, DK2 } }, kr per
+// litre and kr per kWh excl. VAT. A source that failed this time keeps its value from `previous`.
+export function pricesFile({ ok, spot, previous = null, now = new Date() }) {
+  const fuel = ok ? fuelFromOk(ok) : { petrol: null, diesel: null };
+  const out = {
+    updatedAt: now.toISOString(),
+    petrol: fuel.petrol ?? previous?.petrol ?? null,
+    diesel: fuel.diesel ?? previous?.diesel ?? null,
+    spot: {},
+    sources: 'OK (mobility-prices.ok.dk), Energi Data Service DayAheadPrices, 30-day average',
+  };
+  for (const area of AREAS) {
+    const v = spot?.[area] ? spotFromEds(spot[area]) : null;
+    out.spot[area] = v != null ? Math.round(v * 10000) / 10000 : (previous?.spot?.[area] ?? null);
+  }
+  return out;
+}
+
+// What the app takes from prices.json for one price area: { petrol, diesel, spot }, each null if
+// the file has no usable value.
+export function readPricesFile(json, area) {
+  const ok = v => (typeof v === 'number' && Number.isFinite(v) && v > 0 ? v : null);
+  const spot = json?.spot?.[area];
+  return {
+    petrol: ok(json?.petrol),
+    diesel: ok(json?.diesel),
+    spot: typeof spot === 'number' && Number.isFinite(spot) ? spot : null,
+  };
 }
 
 // What a kWh at home costs: spot price plus VAT, plus tariffs, tax and supplier (incl. VAT).

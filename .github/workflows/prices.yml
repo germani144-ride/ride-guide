@@ -1,0 +1,37 @@
+# Today's fuel and electricity prices for the app. The sources don't allow a web app to read them
+# directly (no CORS), so this fetches them here and commits prices.json, which GitHub Pages serves
+# next to the app. Runs twice a day (fuel prices change around midday) and on request.
+name: Fetch prices
+
+on:
+  schedule:
+    - cron: '17 4,12 * * *' # 05:17 and 13:17 Danish winter time
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: prices
+  cancel-in-progress: false
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: node scripts/fetch-prices.mjs
+      - name: Commit prices.json if it changed
+        run: |
+          if git diff --quiet -- prices.json && git ls-files --error-unmatch prices.json >/dev/null 2>&1; then
+            echo "no change"; exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add prices.json
+          git commit -m "prices: $(date -u +%Y-%m-%dT%H:%MZ)"
+          git pull --rebase origin main
+          git push

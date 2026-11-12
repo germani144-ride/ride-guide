@@ -1,14 +1,13 @@
-// Today's fuel and electricity prices: fetched by themselves and on request. The price sources
-// are played by the tests (see fixtures.mjs).
+// Today's fuel and electricity prices: fetched by themselves and on request, from prices.json
+// (written by the GitHub Action, played by the tests; see fixtures.mjs).
 import { test, expect } from './fixtures.mjs';
 
 test("the app fetches today's prices by itself, and the costs follow them", async ({ page, app }) => {
-  const asked = await app.prices({ petrol: 14.29, diesel: 13.19, spot: 600 });
+  const asked = await app.prices({ petrol: 14.29, diesel: 13.19, spot: 0.6 });
   await app.open('#/history');
   await expect.poll(async () => (await app.saved(), (await app.state()).settings.petrolPrice)).toBe(14.29);
-  expect(asked.some(u => u.startsWith('https://mobility-prices.ok.dk/api/v1/fuel-prices'))).toBe(true);
-  const eds = asked.find(u => u.startsWith('https://api.energidataservice.dk/dataset/DayAheadPrices'));
-  expect(decodeURIComponent(eds)).toContain('"PriceArea":["DK2"]');
+  // from the app's own address, past the offline cache
+  expect(asked.some(u => /\/ride-guide\/prices\.json\?check=\d+$/.test(u))).toBe(true);
   const s = (await app.state()).settings;
   expect(s).toMatchObject({ petrolPrice: 14.29, dieselPrice: 13.19, homeElPrice: 1.3 }); // 0.6 × 1.25 + 0.55
   // 5.38 kr per km at the default prices (see settings.spec.mjs); cheaper fuel, cheaper km.
@@ -23,7 +22,7 @@ test("the app fetches today's prices by itself, and the costs follow them", asyn
 });
 
 test('the add-on and the price area change the home electricity price', async ({ page, app }) => {
-  await app.prices({ spot: 600 });
+  await app.prices({ spot: 0.6 });
   await app.open('#/settings');
   await expect(page.locator('#set-homeElPrice')).toHaveValue('1.3');
   await page.locator('#set-elAddOn').fill('0.75');
@@ -31,10 +30,9 @@ test('the add-on and the price area change the home electricity price', async ({
   await app.saved();
   expect((await app.state()).settings.homeElPrice).toBe(1.5);
 
-  const asked = await app.prices({ spot: 400 });
+  await app.prices({ spot: 0.5 }); // DK1 is 0.1 lower in the played file
   await page.getByRole('radio', { name: 'DK1, west' }).click();
   await expect(page.locator('.price-status')).toContainText('spot price 0.40 kr (DK1');
-  expect(decodeURIComponent(asked.at(-1))).toContain('"PriceArea":["DK1"]');
   await app.saved();
   expect((await app.state()).settings.homeElPrice).toBe(1.25); // 0.4 × 1.25 + 0.75
 });
@@ -76,7 +74,7 @@ test('Fetch latest sits in Fuel and electricity and works with automatic updates
     has: page.getByRole('heading', { name: 'Fuel and electricity' }),
   });
   await expect(energy.getByRole('button', { name: 'Fetch latest' })).toBeVisible();
-  await app.prices({ petrol: 14.79, diesel: 13.59, spot: 600 });
+  await app.prices({ petrol: 14.79, diesel: 13.59, spot: 0.6 });
   await energy.getByRole('button', { name: 'Fetch latest' }).click();
   await expect(page.locator('.toast')).toHaveText('Prices updated');
   await expect(page.locator('#set-petrolPrice')).toHaveValue('14.79');

@@ -5,43 +5,23 @@ import { test as base, expect } from '@playwright/test';
 // Cars' ages (and so their costs) depend on today's date; fix it so expected numbers stay put.
 export const TODAY = new Date('2026-10-24T12:00:00+02:00');
 
-// The price sources, played by the tests. By default they answer with prices equal to the app's
-// defaults (petrol 17.5, diesel 19.5, home electricity 0.68 × 1.25 + 0.55 = 1.40), so fetching
-// today's prices changes no number on screen. A test can call app.prices() to answer otherwise.
-const CORS = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*' };
-export function okAnswer(petrol, diesel) {
-  const station = (p, d) => ({
-    facility_number: 1,
-    prices: [
-      { product_name: 'Blyfri 95', price: p },
-      { product_name: 'Diesel', price: d },
-      { product_name: 'Oktan 100', price: p + 1 },
-    ],
-  });
-  return {
-    items: [
-      station(petrol, diesel),
-      station(petrol + 0.2, diesel + 0.2),
-      station(petrol - 0.2, diesel - 0.2),
-    ],
-  };
+// prices.json (written by the GitHub Action), played by the tests. By default it holds prices
+// equal to the app's defaults (petrol 17.5, diesel 19.5, home electricity 0.68 × 1.25 + 0.55 =
+// 1.40), so fetching today's prices changes no number on screen. A test can call app.prices() to
+// answer otherwise; `spot` is in kr per kWh.
+export function pricesJson({ petrol = 17.5, diesel = 19.5, spot = 0.68 } = {}) {
+  return { updatedAt: '2026-10-24T04:17:00.000Z', petrol, diesel, spot: { DK1: spot - 0.1, DK2: spot } };
 }
-export function edsAnswer(dkkPerMwh) {
-  return { records: [{ DayAheadPriceDKK: dkkPerMwh - 100 }, { DayAheadPriceDKK: dkkPerMwh + 100 }] };
-}
-async function playPrices(page, { petrol = 17.5, diesel = 19.5, spot = 680, status = 200 } = {}) {
+async function playPrices(page, { status = 200, ...prices } = {}) {
   const asked = [];
-  const answer = body => route => {
+  await page.route('**/prices.json*', route => {
     asked.push(route.request().url());
     return route.fulfill({
       status,
-      headers: CORS,
       contentType: 'application/json',
-      body: JSON.stringify(body),
+      body: JSON.stringify(pricesJson(prices)),
     });
-  };
-  await page.route('https://mobility-prices.ok.dk/**', answer(okAnswer(petrol, diesel)));
-  await page.route('https://api.energidataservice.dk/**', answer(edsAnswer(spot)));
+  });
   return asked;
 }
 
