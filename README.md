@@ -80,7 +80,7 @@ diesel), cars from 1 July 2021 by CO2 per km (electric cars: the lowest rate, 46
 year). Diesel cars include the equalisation charge, plus 500 kr per half year without a particle
 filter. If the registration date or the figures are missing, the green tax is left for you to
 type. **The rates change every January: update `TAX_YEAR` and the tables then.** Market value is
-not looked up yet.
+left for you to type (Pedro's decision, 2026-11-12).
 
 Car data comes from [Nummerplade Tjek](https://nummerplade-tjek.dk), by
 [autotelli.dk](https://autotelli.dk), which republishes the Danish motor register.
@@ -174,8 +174,6 @@ saved, so switching back loses nothing).
 
 ## Planned
 
-- **More from the plate**: market value (make, model, year, fuel, fuel use and green tax are
-  looked up today, see [Plate lookup](#plate-lookup)).
 - **Today's Danish fuel and electricity prices**, fetched automatically instead of typed in
   Settings (they vary a lot). Needs a price source the app may call from the browser.
 - **Service plan for your own cars** (Garage): from the odometer reading, the last service and
