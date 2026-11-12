@@ -15,6 +15,8 @@ import {
 } from '../wizard-flow.js';
 import { fmt } from '../i18n.js';
 import { el, svg, ICONS, euStrip, carTitle } from '../ui.js';
+import { lookupPlate, applyLookup } from '../plate-data.js';
+import { lookUpCar } from '../lookup.js';
 import { choiceList, textField, numberField, switchField, fuelPicker } from './fields.js';
 import { renderResult } from './result.js';
 
@@ -130,7 +132,15 @@ function renderForm(ctx, draft, advance) {
   const fields = stepFields(step, car);
   const form = el('form', { class: 'form', novalidate: true });
   form.append(el('h2', {}, step === 'cost' ? t.steps.cost[car.method] : t.steps[step].title));
-  const hint = ['plateEntry', 'running', 'driving'].includes(step) ? t.steps[step].hint : null;
+  const hint =
+    step === 'plateEntry'
+      ? t.steps.plateEntry[state.plateKey ? 'hint' : 'hintNoKey']
+      : ['running', 'driving'].includes(step)
+        ? t.steps[step].hint
+        : null;
+  // What the plate lookup filled in, while the car still has that plate.
+  const lookedUp = draft.lookup?.plate === car.plate && car.plate ? (draft.lookup.filled ?? []) : [];
+  const lookupStatus = el('p', { class: 'hint lookup-status', role: 'status' });
 
   const errorNodes = {};
   const showErrors = errs => {
@@ -165,12 +175,17 @@ function renderForm(ctx, draft, advance) {
         { class: 'field plate-field' },
         el('label', { class: 'plate plate-lg plate-edit' }, euStrip(), input),
         errorNodes.plate,
+        lookupStatus,
       ),
     );
     setTimeout(() => input.focus(), 0);
   }
 
   if (step === 'car') {
+    if (lookedUp.length) {
+      const list = lookedUp.map(f => t.lookup.names[f]).join(', ');
+      form.append(el('p', { class: 'hint lookup-note' }, fmt(t.lookup.found, { list })));
+    }
     form.append(textField('name', car.name, t, v => (car.name = v), ctx, errorNodes));
     form.append(numberField('year', car, t, lang, ctx, errorNodes, { decimals: false }));
     form.append(fuelPicker(car, t, ctx));
@@ -186,11 +201,41 @@ function renderForm(ctx, draft, advance) {
     }
   }
 
+  if (step === 'driving' && lookedUp.includes('kmPerUnit')) {
+    form.append(el('p', { class: 'hint lookup-note' }, t.lookup.foundUse));
+  }
   if (hint) form.append(el('p', { class: 'hint step-hint' }, hint));
 
-  form.append(
-    el('div', { class: 'actions' }, el('button', { type: 'submit', class: 'primary' }, t.wizard.next)),
+  const next = el('button', { type: 'submit', class: 'primary' }, t.wizard.next);
+  // Shown when a lookup fails: carry on and type the car in.
+  const manual = el(
+    'button',
+    { type: 'button', class: 'secondary', hidden: true, onclick: () => advance() },
+    t.lookup.manual,
   );
+  form.append(el('div', { class: 'actions' }, next, manual));
+
+  // Asks the motor register about the plate and fills in the car. A plate that was already
+  // looked up is not asked about again, so going back and forth keeps the user's corrections.
+  const lookUpFirst = async () => {
+    next.disabled = true;
+    next.textContent = t.lookup.searching;
+    lookupStatus.textContent = '';
+    const plate = car.plate;
+    const result = await lookUpCar(plate, state.plateKey);
+    if (state.draft !== draft || draft.step !== 'plateEntry' || car.plate !== plate) return; // moved on
+    if (result.found) {
+      draft.lookup = { plate, filled: applyLookup(car, result.found) };
+      advance();
+      return;
+    }
+    draft.lookup = null;
+    next.disabled = false;
+    next.textContent = t.wizard.next;
+    lookupStatus.textContent = t.lookup.errors[result.error];
+    manual.hidden = false;
+  };
+
   form.addEventListener('submit', e => {
     e.preventDefault();
     const errors = validate(car, fields);
@@ -200,7 +245,9 @@ function renderForm(ctx, draft, advance) {
       form.querySelector(`[data-field="${first}"]`)?.focus();
       return;
     }
-    advance();
+    const canLookUp = step === 'plateEntry' && state.plateKey && !draft.jump && lookupPlate(car.plate);
+    if (canLookUp && draft.lookup?.plate !== car.plate) lookUpFirst();
+    else advance();
   });
   return form;
 }

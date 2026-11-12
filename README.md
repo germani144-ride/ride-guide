@@ -13,7 +13,9 @@ The app has three tabs:
 
 - **New car** (the landing page) asks one question per screen, from the most general to the
   most specific:
-  1. Do you have the license plate? If yes, type it in (Danish format `AB 12 345`).
+  1. Do you have the license plate? If yes, type it in (Danish format `AB 12 345`). With a
+     lookup key (see [Plate lookup](#plate-lookup)) the car, model year, fuel and fuel use are
+     filled in for you; check them and correct anything that is off.
   2. Which car is it: make and model, model year, fuel (petrol, diesel or electric).
   3. How will you pay: pay upfront, finance or lease.
   4. The terms for that choice:
@@ -61,8 +63,27 @@ the service worker, deletes only its own `rideguide-` caches and reloads), so th
 close the app or reinstall. It also shows whether a push actually went live.
 
 Numbers can be typed the Danish or English way: `13,69`, `13.69`, `250.000` and `250 000`
-all work. The license plate is stored with the car; automatic lookup of green tax and fuel use
-from the plate is not connected yet.
+all work. The license plate is stored with the car.
+
+### Plate lookup
+
+RideGuide can fill in a car from its Danish license plate: make and model, model year, fuel, and
+fuel use (km per litre, or km per kWh for electric cars, from the register's Wh per km). The
+fuel use is the official figure; everyday driving usually uses more, so adjust it if you know
+your own. Green tax and market value are not looked up yet.
+
+Car data comes from [Nummerplade Tjek](https://nummerplade-tjek.dk), by
+[autotelli.dk](https://autotelli.dk), which republishes the Danish motor register.
+
+To turn it on:
+
+1. Get a free key at <https://nummerplade-tjek.dk/api-registrering/> (500 lookups a day).
+2. Paste it under **Settings → Plate lookup**.
+
+The key is kept on the device only: it is not in this repository and is left out of backups.
+The app sends the plate and the key to nummerplade-tjek.dk and nowhere else. If a lookup fails
+(unknown plate, no connection, key not accepted, daily limit), the app says why and you can
+fill in the car yourself. Without a key the wizard works as before.
 
 Data is stored in the browser on the device only. Older data (v0.1 and v2) is upgraded
 automatically: cars switch to the estimated loss in value and maintenance (their typed values are
@@ -143,7 +164,8 @@ saved, so switching back loses nothing).
 
 ## Planned
 
-- **Look up a car by its plate**: green tax, fuel use, and ideally market value.
+- **More from the plate**: green tax and ideally market value (make, model, year, fuel and fuel
+  use are looked up today, see [Plate lookup](#plate-lookup)).
 - **Today's Danish fuel and electricity prices**, fetched automatically instead of typed in
   Settings (they vary a lot). Needs a price source the app may call from the browser.
 - **Service plan for your own cars** (Garage): from the odometer reading, the last service and
@@ -180,6 +202,8 @@ src/ui.js                     shared interface pieces (el(), price, breakdown, b
 src/format.js                 numbers in English or Danish
 src/compare.js                what the comparison highlights
 src/explain.js                how each part of the cost is calculated, in words (no DOM)
+src/plate-data.js             plate lookup: the address, reading the answer, filling in the car
+src/lookup.js                 plate lookup: the call to nummerplade-tjek.dk
 src/engine.js                 the cost engine
 src/engine-sheet.js           sheet mode: the spreadsheet's formulas (tests only)
 src/model.js                  the car record, payment methods, settings, migrate(), validation
@@ -195,7 +219,8 @@ test/                         unit tests (*.test.mjs) and browser tests (browser
 ```
 
 Files without DOM, storage or network code, so they can run on a server too: `engine.js`,
-`engine-sheet.js`, `model.js`, `wizard-flow.js`, `format.js`, `compare.js` and `routes.js`.
+`engine-sheet.js`, `model.js`, `wizard-flow.js`, `format.js`, `compare.js`, `routes.js`,
+`explain.js` and `plate-data.js`.
 
 ### Data flow
 
@@ -220,7 +245,8 @@ as a reference.
 ### Storage
 
 Everything is stored on the phone, in `localStorage` under the key `rideguide.v1`, as one JSON
-object: `{ version, lang, settings, cars, draft }`. `draft` is a car being added in the wizard.
+object: `{ version, lang, settings, cars, draft, plateKey }`. `draft` is a car being added in
+the wizard; `plateKey` is your own key for the plate lookup (left out of backups).
 Only `src/storage.js` touches storage; moving to a server later means one more adapter with the
 same `load()` and `save()`. When the shape of saved data changes, `STATE_VERSION` goes up and
 `migrate()` in `src/model.js` upgrades older data (with a test). Backups are the same JSON.
@@ -235,14 +261,18 @@ same `load()` and `save()`. When the shape of saved data changes, `STATE_VERSION
     `data/sheet_fixtures.json` within 0.01 kr, and three financed scenarios in
     `data/sheet_fixtures_financed.json` (set on a copy of the workbook and recalculated in
     LibreOffice).
-  - `test/model.test.mjs`: payment methods, data upgrades (v0.1 to v6), switches, plates, number
+  - `test/model.test.mjs`: payment methods, data upgrades (v0.1 to v9), switches, plates, number
     parsing, validation, the breakdown adding up, the version matching in `src/version.js` and
     `package.json`, the update check, and every app file being in the offline list in `sw.js`.
   - `test/wizard-flow.test.mjs` and `test/helpers.test.mjs`: the wizard's steps, number
     formatting, the comparison, routes and switches.
+  - `test/plate-data.test.mjs`: the plate lookup: the address asked, reading the answer (petrol,
+    diesel, electric, missing pieces), the message for each failure, and the stored key.
 - Browser tests (`npm run test:browser`, Playwright, Pixel 7 emulation): adding a car (cash and
   lease), History, the years and km bars, the comparison, a car's page, Settings (saving,
-  reload, update check), English and Danish, and starting offline. The date is fixed so the
+  reload, update check), English and Danish, starting offline, and the plate lookup (the test
+plays the lookup service: a car found, a plate not found, no key, and the key staying out of a
+backup). The date is fixed so the
   expected numbers stay put, and any console error, including a Content-Security-Policy
   violation, fails the test.
 
@@ -255,18 +285,22 @@ The pieces that would change for a commercial version are kept separate:
 - **Storage** sits behind `load()` and `save()`. Swapping localStorage for an API with
   accounts means adding one adapter, not touching the UI.
 - **Saved data** carries a `version` field, and `migrate()` upgrades older versions.
-- **The decision tree** is a small table of steps in `src/wizard-flow.js`, so a plate lookup
-  step that prefills the car can slot in after the plate question.
+- **The decision tree** is a small table of steps in `src/wizard-flow.js`.
+- **The plate lookup** keeps reading the answer (`src/plate-data.js`) apart from making the call
+  (`src/lookup.js`), so another data service, or a server that holds the key for all users,
+  only replaces the call.
 - **Strings** are all in `src/i18n.js`, so more languages are one block each.
 
 ## Security
 
-Everything stays on the phone: RideGuide sends no data anywhere. `index.html` sets a strict
-Content-Security-Policy: scripts, styles, fonts, images and network requests may only come from
-RideGuide's own address, so no injected or third-party script can run or send data out. Keep it
-that way: no inline `<script>` blocks or `onclick="…"` attributes (put code in `src/`), and if a
-feature ever needs another address (a plate lookup or price service), add exactly that address to
-`connect-src` in the policy.
+Your cars and settings stay on the phone. The one thing RideGuide sends out is a plate lookup,
+and only if you added a lookup key: the plate and your key go to `nummerplade-tjek.dk`.
+`index.html` sets a strict Content-Security-Policy: scripts, styles, fonts and images may only
+come from RideGuide's own address, and network requests may only go there or to
+`https://nummerplade-tjek.dk`, so no injected or third-party script can run or send data
+elsewhere. Keep it that way: no inline `<script>` blocks or `onclick="…"` attributes (put code in
+`src/`), and if a feature ever needs another address (a price service), add exactly that address
+to `connect-src` in the policy. No key or token is ever committed to this repository.
 
 ## Deploy
 

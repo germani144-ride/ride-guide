@@ -4,7 +4,8 @@ import { migrate } from './model.js';
 import { el } from './ui.js';
 
 export function downloadBackup(state) {
-  const data = { ...state, draft: null, exportedAt: new Date().toISOString() };
+  // The plate lookup key is left out: a backup file may be shared, the key stays on this device.
+  const data = { ...state, draft: null, plateKey: '', exportedAt: new Date().toISOString() };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const a = el('a', {
     href: URL.createObjectURL(blob),

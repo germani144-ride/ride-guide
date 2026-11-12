@@ -6,13 +6,16 @@ import { test as base, expect } from '@playwright/test';
 export const TODAY = new Date('2026-10-24T12:00:00+02:00');
 
 export const test = base.extend({
+  // Console errors a test causes on purpose (e.g. a lookup the server answers with 404).
+  expectedErrors: [[], { option: true }],
   errors: [
-    async ({ page }, use) => {
+    async ({ page, expectedErrors }, use) => {
       const errors = [];
       page.on('pageerror', e => errors.push(e.message));
       page.on('console', m => m.type() === 'error' && errors.push(m.text()));
       await use(errors);
-      expect(errors, 'errors in the browser console').toEqual([]);
+      const unexpected = errors.filter(e => !expectedErrors.some(re => re.test(e)));
+      expect(unexpected, 'errors in the browser console').toEqual([]);
     },
     { auto: true },
   ],

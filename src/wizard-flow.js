@@ -2,7 +2,7 @@
 // asks, and in what order. No DOM, so the step logic can be tested (test/wizard-flow.test.mjs).
 //
 // A draft is the wizard's working state, saved with the app state:
-//   { car, hasPlate: 'yes'|'no'|null, step, trail: [steps to go back to], jump, editingId }
+//   { car, hasPlate: 'yes'|'no'|null, step, trail: [steps to go back to], jump, editingId, lookup }
 // `jump` is set when the user changes one answer from the result screen (or tries another way to
 // pay): the wizard then returns to the result instead of walking through every later step.
 import { newCar, DRIVING_FIELDS, costFields, runningFields, switchOn } from './model.js';
@@ -27,6 +27,7 @@ export function newDraft(overrides = {}) {
     trail: [],
     jump: false,
     editingId: null,
+    lookup: null, // what the plate lookup filled in: { plate, filled: [fields] }
     ...overrides,
   };
 }

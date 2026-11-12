@@ -134,3 +134,8 @@ a {
   height: 22px;
   flex-shrink: 0;
 }
+
+/* Buttons set their own display, which would otherwise beat the hidden attribute. */
+[hidden] {
+  display: none !important;
+}

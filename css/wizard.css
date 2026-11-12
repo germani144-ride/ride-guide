@@ -107,3 +107,21 @@
 .plate-field {
   margin-top: 24px;
 }
+
+/* Plate lookup: what went wrong (under the plate), and what was filled in (on the next steps). */
+.lookup-status {
+  margin-top: 12px;
+  color: var(--ink);
+}
+
+.lookup-status:empty {
+  display: none;
+}
+
+.lookup-note {
+  margin-top: 14px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+}

@@ -1,5 +1,5 @@
 import { LANGS } from '../i18n.js';
-import { parseNumber } from '../model.js';
+import { parseNumber, sanitizePlateKey } from '../model.js';
 import { DEFAULT_SETTINGS } from '../engine.js';
 import { el, assumptionBars, toast } from '../ui.js';
 import { plain, inputNumberText } from '../format.js';
@@ -159,6 +159,7 @@ export function renderSettings(ctx) {
     section('money'),
     section('running'),
     section('energy'),
+    plateSection(ctx),
     el(
       'section',
       { class: 'setting' },
@@ -173,6 +174,48 @@ export function renderSettings(ctx) {
     ),
     el('p', { class: 'version' }, `RideGuide ${ctx.version}`),
     updateButton(ts),
+  );
+}
+
+// The user's own key for the plate lookup, and where the data comes from.
+function plateSection(ctx) {
+  const { state } = ctx;
+  const tp = ctx.t.settings.plate;
+  const link = (href, text) => el('a', { href, target: '_blank', rel: 'noopener' }, text);
+  return el(
+    'section',
+    { class: 'setting' },
+    el('h2', {}, tp.title),
+    el('p', { class: 'hint' }, tp.hint),
+    el(
+      'div',
+      { class: 'field' },
+      el('label', { for: 'set-plateKey' }, tp.key),
+      el(
+        'div',
+        { class: 'input-wrap' },
+        el('input', {
+          id: 'set-plateKey',
+          type: 'text',
+          value: state.plateKey,
+          autocomplete: 'off',
+          autocapitalize: 'off',
+          spellcheck: 'false',
+          maxlength: '200',
+          oninput: e => {
+            state.plateKey = sanitizePlateKey(e.target.value);
+            ctx.save();
+          },
+          onchange: () => toast(ctx.t.settings.saved),
+          onkeydown: e => {
+            if (e.key === 'Enter') e.target.blur();
+          },
+        }),
+      ),
+      el('p', { class: 'hint' }, tp.keyHint),
+    ),
+    el('p', { class: 'hint' }, link('https://nummerplade-tjek.dk/api-registrering/', tp.getKey)),
+    el('p', { class: 'hint' }, `${tp.credit} `, link('https://autotelli.dk', 'autotelli.dk'), '.'),
   );
 }
 

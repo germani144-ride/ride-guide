@@ -22,7 +22,9 @@ const en = {
     },
     plateEntry: {
       title: 'Type the license plate',
-      hint: 'The plate is saved with the car. Automatic lookup of green tax and fuel use is not connected yet, so you fill those in yourself.',
+      hint: 'When you continue, the car, model year, fuel and fuel use are looked up in the Danish motor register.',
+      hintNoKey:
+        'The plate is saved with the car. To have the car looked up from the plate, add a lookup key in Settings.',
     },
     car: { title: 'Which car is it?' },
     method: {
@@ -110,6 +112,21 @@ const en = {
   },
   yes: 'Yes',
   no: 'No',
+  lookup: {
+    searching: 'Looking up…',
+    manual: 'Fill in myself',
+    found: 'Filled in from the plate: {list}. Check it and correct anything that is off.',
+    foundUse:
+      'Filled in from the plate. This is the official figure; everyday driving usually uses more, so adjust it if you know your own.',
+    names: { name: 'the car', year: 'model year', fuel: 'fuel', kmPerUnit: 'fuel use' },
+    errors: {
+      notFound: 'No car found with that plate. Check the plate, or fill in the car yourself.',
+      badKey: 'The lookup key was not accepted. Check it in Settings, or fill in the car yourself.',
+      limit: "Today's lookups are used up. Fill in the car yourself, or try again tomorrow.",
+      unreachable:
+        "Couldn't reach the lookup service. Check the connection and try again, or fill in the car yourself.",
+    },
+  },
   errors: {
     required: 'Fill this in to continue.',
     downPaymentRange: 'Below 100% means a loan. For 100%, go back and choose Pay upfront.',
@@ -271,6 +288,14 @@ const en = {
     upToDate: "You're on the latest version (v{v}).",
     unreachable: "Couldn't reach the server. Check the connection and try again.",
     updateAvailable: 'Version v{latest} is available (you have v{v}). Update now?',
+    plate: {
+      title: 'Plate lookup',
+      hint: 'With a lookup key, RideGuide fills in the car, model year, fuel and fuel use from the license plate. The key is free.',
+      key: 'Lookup key',
+      keyHint: 'Kept on this device only. It is not included in backups.',
+      getKey: 'Get a free key at Nummerplade Tjek',
+      credit: 'Car data from Nummerplade Tjek, by',
+    },
     defaultIs: 'Default:',
     saved: 'Saved',
     data: 'Your data',
@@ -314,7 +339,9 @@ const da = {
     },
     plateEntry: {
       title: 'Skriv nummerpladen',
-      hint: 'Nummerpladen gemmes med bilen. Automatisk opslag af grøn ejerafgift og forbrug er ikke koblet på endnu, så dem udfylder du selv.',
+      hint: 'Når du fortsætter, slås bil, årgang, brændstof og forbrug op i Motorregistret.',
+      hintNoKey:
+        'Nummerpladen gemmes med bilen. Vil du have bilen slået op ud fra nummerpladen, så tilføj en opslagsnøgle under Indstillinger.',
     },
     car: { title: 'Hvilken bil er det?' },
     method: {
@@ -398,6 +425,21 @@ const da = {
   },
   yes: 'Ja',
   no: 'Nej',
+  lookup: {
+    searching: 'Slår op…',
+    manual: 'Udfyld selv',
+    found: 'Udfyldt ud fra nummerpladen: {list}. Tjek det, og ret det, der ikke passer.',
+    foundUse:
+      'Udfyldt ud fra nummerpladen. Det er det officielle tal; i daglig kørsel bruger bilen som regel mere, så ret det, hvis du kender dit eget.',
+    names: { name: 'bilen', year: 'årgang', fuel: 'brændstof', kmPerUnit: 'forbrug' },
+    errors: {
+      notFound: 'Ingen bil fundet med den nummerplade. Tjek nummerpladen, eller udfyld bilen selv.',
+      badKey: 'Opslagsnøglen blev ikke godkendt. Tjek den under Indstillinger, eller udfyld bilen selv.',
+      limit: 'Dagens opslag er brugt op. Udfyld bilen selv, eller prøv igen i morgen.',
+      unreachable:
+        'Kunne ikke få fat i opslagstjenesten. Tjek forbindelsen og prøv igen, eller udfyld bilen selv.',
+    },
+  },
   errors: {
     required: 'Udfyld dette for at fortsætte.',
     downPaymentRange: 'Under 100 % betyder et lån. Ved 100 % skal du gå tilbage og vælge Kontant.',
@@ -561,6 +603,14 @@ const da = {
     upToDate: 'Du har den nyeste version (v{v}).',
     unreachable: 'Kunne ikke nå serveren. Tjek forbindelsen, og prøv igen.',
     updateAvailable: 'Version v{latest} er klar (du har v{v}). Opdatér nu?',
+    plate: {
+      title: 'Nummerpladeopslag',
+      hint: 'Med en opslagsnøgle udfylder RideGuide bil, årgang, brændstof og forbrug ud fra nummerpladen. Nøglen er gratis.',
+      key: 'Opslagsnøgle',
+      keyHint: 'Gemmes kun på denne enhed. Den kommer ikke med i sikkerhedskopier.',
+      getKey: 'Få en gratis nøgle hos Nummerplade Tjek',
+      credit: 'Bildata fra Nummerplade Tjek, af',
+    },
     defaultIs: 'Standard:',
     saved: 'Gemt',
     data: 'Dine data',

@@ -4,7 +4,7 @@ import { DEFAULT_SETTINGS } from './engine.js';
 // A saved car keeps every number it has ever been given, so switching payment method and back
 // loses nothing. toEngineInput() decides which numbers count for the chosen method.
 
-export const STATE_VERSION = 9;
+export const STATE_VERSION = 10;
 export const METHODS = ['cash', 'finance', 'lease'];
 export const FUELS = ['petrol', 'diesel', 'electric'];
 
@@ -223,7 +223,14 @@ export function toEngineInput(
 }
 
 export function emptyState(lang = 'en') {
-  return { version: STATE_VERSION, lang, settings: { ...DEFAULT_SETTINGS }, cars: [], draft: null };
+  return {
+    version: STATE_VERSION,
+    lang,
+    settings: { ...DEFAULT_SETTINGS },
+    cars: [],
+    draft: null,
+    plateKey: '', // the user's own key for the plate lookup; stays on this device
+  };
 }
 
 // Keeps known settings of the right type and fills the rest with defaults.
@@ -237,6 +244,11 @@ export function sanitizeSettings(raw) {
   }
   if (!(out.years > 0)) out.years = DEFAULT_SETTINGS.years;
   return out;
+}
+
+// The plate lookup key as typed: trimmed, no spaces inside, and never absurdly long.
+export function sanitizePlateKey(raw) {
+  return typeof raw === 'string' ? raw.replace(/\s/g, '').slice(0, 200) : '';
 }
 
 // Accepts the current state, the v0.1 grid state, or an export of either.
@@ -257,6 +269,8 @@ export function migrate(raw, fallbackLang = 'en') {
     if (raw.settings?.petrolPrice === 13.69) state.settings.petrolPrice = DEFAULT_SETTINGS.petrolPrice;
     if (raw.settings?.dieselPrice === 13.29) state.settings.dieselPrice = DEFAULT_SETTINGS.dieselPrice;
   }
+  // v10: the user's own key for the plate lookup (empty: no lookup).
+  state.plateKey = sanitizePlateKey(raw.plateKey);
   // v9: owned cars can have repairs paid right after buying (0 = none), filled in by sanitizeCar().
   // v8: owned cars have a market value (0 = the same as the price), filled in by sanitizeCar().
   // v7: leases are fixed (their own period) or flexible (shortest and longest period). Older

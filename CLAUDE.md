@@ -12,7 +12,7 @@
 - Do not change a formula or a default in `src/engine.js` without the owner's approval; when one
   changes on purpose, update its tests and the formula table in README.md in the same change.
 - Keep `src/engine.js`, `src/engine-sheet.js`, `src/model.js`, `src/wizard-flow.js`,
-  `src/format.js`, `src/compare.js`, `src/routes.js` and `src/explain.js` free of DOM, storage and network code
+  `src/format.js`, `src/compare.js`, `src/routes.js`, `src/explain.js` and `src/plate-data.js` free of DOM, storage and network code
   (plain functions with unit tests) so they can move to a backend. Logic goes there, not in
   `src/views/`.
 - All storage goes through the adapter in `src/storage.js`. All UI text goes in `src/i18n.js`,
@@ -27,6 +27,8 @@
 - **Never commit personal data or secrets** to this public repo: no saved car data, exports,
   personal spreadsheets (e.g. life_sheet.xlsx) or real figures from them, and no API keys or
   tokens. A future data provider's key must not live in the repo; ask Pedro how it should be held.
+  The plate lookup key (Pedro's decision, 2026-11-12) is typed in Settings and kept on the device
+  only (`state.plateKey`); it is left out of backups and must never appear in the repo or in tests.
   Exception, Pedro's decision (2026-10-24): the spreadsheet cars in `src/seed.js` and the
   spreadsheet values in `data/` stay as they are; don't replace or scrub them.
 
@@ -41,6 +43,7 @@ src/engine.js              cost engine    src/engine-sheet.js sheet mode (tests 
 src/model.js               car record, settings, migrate(), validation
 src/storage.js             storage adapter   src/backup.js backups   src/update.js update check
 src/i18n.js                all UI text (EN + DA)   src/version.js version   src/boot.js version label
+src/plate-data.js          plate lookup: reading the answer (plain)   src/lookup.js the call
 test/*.test.mjs            unit tests           test/browser/*.spec.mjs browser tests
 ```
 
@@ -63,7 +66,7 @@ RideGuide lives at https://germani144-ride.github.io/ride-guide/ (repo `germani1
 
 - **Service worker:** Cache names start with `rideguide-` (`CACHE` in `sw.js` is built from the version in `src/version.js`). On activate, delete only caches with that prefix (never "every cache but the current one"). Read from this app's own cache (`caches.open(C).then(c => c.match(...))`), never the global `caches.match()`. Only handle requests whose URL starts with `self.registration.scope`; leave other apps, the GitHub API and other origins alone.
 - **Updates (cache-first, same in all of Pedro's apps since 2026-10-25):** open the app from this version's own cache, never network-first (with many files it made every open wait for one round trip per file). The install downloads every app file fresh (`?v=` plus `cache: 'reload'`) into the new version's cache and fails as a whole if one file fails; files not in the cache are fetched with `{cache: 'no-cache'}`; store only `r.ok` responses. Register the worker with `{scope: './', updateViaCache: 'none'}`, call `reg.update()` on every start and when the app becomes visible, and reload once on `controllerchange` (not on the first install, not while a field is focused). So a release only reaches phones if the version in `src/version.js` changes. `test/browser/offline.spec.mjs` checks that opening downloads no app files and that a release takes over by itself.
-- **Content-Security-Policy** (in `index.html`): only this app's own address. No inline `<script>` blocks or inline event handlers (put code in `src/`). A feature that must call another address adds exactly that address to `connect-src`; never loosen the rest.
+- **Content-Security-Policy** (in `index.html`): only this app's own address. No inline `<script>` blocks or inline event handlers (put code in `src/`). A feature that must call another address adds exactly that address to `connect-src`; never loosen the rest. Today that is `https://nummerplade-tjek.dk` (plate lookup; the service requires the visible link to autotelli.dk in README.md and Settings, so keep both).
 - **Storage:** all storage goes through the adapter in `src/storage.js`, whose key is `rideguide.v1` (always `rideguide.`-prefixed).
 - **Manifest:** `scope` and `start_url` are `./`. **Never change the manifest `id`**, not even to fix an install problem, unless Pedro explicitly asks for it in that chat. The id is how Android recognises the installed app: changing it orphans the installed copy. If installing fails on the phone, investigate and report; don't change the id.
 - The manifest `id` is `/ride-guide/app`.

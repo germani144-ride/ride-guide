@@ -148,6 +148,7 @@ async function importBackup(file) {
   if (!confirm(s.settings.confirmImport)) return;
   next.lang = state.lang;
   next.draft = null;
+  next.plateKey = state.plateKey; // backups carry no key; keep the one on this device
   state = next;
   save();
   toast(s.toast.imported);
