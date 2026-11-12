@@ -8,6 +8,7 @@
 // The reader below is forgiving on purpose: numbers may come as text, and a missing field is
 // simply left for the user to fill in.
 import { FUELS } from './model.js';
+import { greenTaxHalfYear } from './green-tax.js';
 
 export const LOOKUP_ORIGIN = 'https://nummerplade-tjek.dk';
 
@@ -64,8 +65,67 @@ function fuelFrom(text) {
   return null;
 }
 
+// Every [key, value] in an object and the objects inside it (two levels down is plenty). Keys
+// inside an object carry its name: { co2: { wltp: 125 } } gives ['co2.wltp', 125].
+function entries(obj, depth = 2, prefix = '') {
+  if (!obj || typeof obj !== 'object' || depth < 0) return [];
+  return Object.entries(obj).flatMap(([k, v]) => {
+    const key = prefix + k;
+    return v && typeof v === 'object' && !Array.isArray(v)
+      ? [[key, v], ...entries(v, depth - 1, `${key}.`)]
+      : [[key, v]];
+  });
+}
+
+// A date as 'YYYY-MM-DD' from '2016-03-14', '2016-03-14T00:00:00Z' or '14-03-2016', else ''.
+function isoDate(v) {
+  const s = String(v ?? '').trim();
+  let m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+  m = s.match(/^(\d{2})[-./](\d{2})[-./](\d{4})/);
+  return m ? `${m[3]}-${m[2]}-${m[1]}` : '';
+}
+
+// The first registration date, wherever the answer keeps it.
+function firstRegistration(vehicle) {
+  for (const [k, v] of entries(vehicle)) {
+    if (/first.*reg|reg.*first|foerste|første/i.test(k) && isoDate(v)) return isoDate(v);
+  }
+  return '';
+}
+
+// CO2 in g/km (the WLTP figure if both are given), or null.
+function co2From(env) {
+  const hits = entries(env).filter(([k, v]) => /co2/i.test(k) && toNumber(v) > 0);
+  const wltp = hits.find(([k]) => /wltp/i.test(k));
+  return (wltp ?? hits[0]) ? toNumber((wltp ?? hits[0])[1]) : null;
+}
+
+// true / false if the answer says whether there is a particle filter, else null.
+function particleFilterFrom(env) {
+  const hit = entries(env).find(([k]) => /particle|partikel/i.test(k));
+  if (!hit) return null;
+  const v = hit[1];
+  if (typeof v === 'boolean') return v;
+  if (/^(ja|yes|true|1)$/i.test(String(v).trim())) return true;
+  if (/^(nej|no|false|0)$/i.test(String(v).trim())) return false;
+  return null;
+}
+
+// A green tax amount the answer carries itself (kr per half year), or null. Amounts that look
+// yearly are halved.
+function greenTaxFrom(d) {
+  for (const [k, v] of entries(d, 3)) {
+    if (!/green_?tax|ejerafgift|owner_?tax|periodic_?tax|ownership_?tax/i.test(k)) continue;
+    const n = toNumber(v);
+    if (n > 0) return /year|annual|aarlig|årlig/i.test(k) && !/half|halv/i.test(k) ? n / 2 : n;
+  }
+  return null;
+}
+
 // Reads the service's answer into the car fields RideGuide knows:
-//   { name, year, fuel, kmPerUnit }, each only if the answer has it. null if it has no car.
+//   { name, year, fuel, kmPerUnit, greenTaxMo }, each only if the answer has it (green tax: from
+//   the answer, else worked out from the official rates). null if it has no car.
 export function carFromLookup(json) {
   const d = json?.data ?? json;
   const v = d?.vehicle;
@@ -90,13 +150,27 @@ export function carFromLookup(json) {
   else if (found.fuel && found.fuel !== 'electric' && kmPerLitre > 0)
     found.kmPerUnit = Math.round(kmPerLitre * 10) / 10;
 
+  // Green tax: the register's own amount if the answer has it; else the official rate tables.
+  const halfYear =
+    greenTaxFrom(d) ??
+    (found.fuel
+      ? greenTaxHalfYear({
+          fuel: found.fuel,
+          registered: firstRegistration(v),
+          kmPerLitre: kmPerLitre,
+          co2: co2From(env),
+          particleFilter: particleFilterFrom(env),
+        })
+      : null);
+  if (halfYear > 0) found.greenTaxMo = Math.round((halfYear / 6) * 100) / 100;
+
   return Object.keys(found).length ? found : null;
 }
 
 // Puts what was found on the car and returns the names of the fields it filled.
 export function applyLookup(car, found) {
   const filled = [];
-  for (const f of ['name', 'year', 'fuel', 'kmPerUnit']) {
+  for (const f of ['name', 'year', 'fuel', 'kmPerUnit', 'greenTaxMo']) {
     if (found?.[f] == null) continue;
     car[f] = found[f];
     filled.push(f);

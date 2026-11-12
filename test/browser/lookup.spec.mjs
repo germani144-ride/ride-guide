@@ -33,12 +33,18 @@ async function typePlate(page, plate) {
   await page.locator('.plate-input').fill(plate);
 }
 
-test('typing a plate fills in the car, year, fuel and fuel use', async ({ page, app }) => {
+test('typing a plate fills in the car, year, fuel, fuel use and green tax', async ({ page, app }) => {
   const asked = await playService(page, 200, {
     status: 'ok',
     data: {
       plate: 'AB12345',
-      vehicle: { make: 'FORD', model: 'MONDEO', model_year: 2016, fuel_type: 'Benzin' },
+      vehicle: {
+        make: 'FORD',
+        model: 'MONDEO',
+        model_year: 2016,
+        fuel_type: 'Benzin',
+        first_registration_date: '2016-05-12',
+      },
       environment: { fuel_usage: 17.2, ev_consumption: null },
     },
   });
@@ -50,7 +56,7 @@ test('typing a plate fills in the car, year, fuel and fuel use', async ({ page, 
   await expect(page.getByRole('heading', { name: 'Which car is it?' })).toBeVisible();
   expect(asked).toEqual([{ url: 'https://nummerplade-tjek.dk/api/v1/vehicles/AB12345', key: 'my-test-key' }]);
   await expect(page.locator('.lookup-note')).toHaveText(
-    'Filled in from the plate: the car, model year, fuel, fuel use. Check it and correct anything that is off.',
+    'Filled in from the plate: the car, model year, fuel, fuel use, green tax. Check it and correct anything that is off.',
   );
   await expect(page.locator('#f-name')).toHaveValue('Ford Mondeo');
   await expect(page.locator('#f-year')).toHaveValue('2016');
@@ -69,6 +75,9 @@ test('typing a plate fills in the car, year, fuel and fuel use', async ({ page, 
   await page.getByRole('button', { name: 'Next' }).click();
   await expect(page.locator('#f-kmPerUnit')).toHaveValue('17.2');
   await expect(page.locator('.lookup-note')).toContainText('official figure');
+  await page.getByRole('button', { name: 'Next' }).click();
+  await expect(page.locator('#f-greenTaxMo')).toHaveValue('1290'); // per half year
+  await expect(page.locator('.lookup-note')).toContainText("this year's official rates");
 });
 
 test.describe('a plate the register does not know', () => {

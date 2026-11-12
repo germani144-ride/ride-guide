@@ -12,7 +12,7 @@
 - Do not change a formula or a default in `src/engine.js` without the owner's approval; when one
   changes on purpose, update its tests and the formula table in README.md in the same change.
 - Keep `src/engine.js`, `src/engine-sheet.js`, `src/model.js`, `src/wizard-flow.js`,
-  `src/format.js`, `src/compare.js`, `src/routes.js`, `src/explain.js` and `src/plate-data.js` free of DOM, storage and network code
+  `src/format.js`, `src/compare.js`, `src/routes.js`, `src/explain.js`, `src/plate-data.js` and `src/green-tax.js` free of DOM, storage and network code
   (plain functions with unit tests) so they can move to a backend. Logic goes there, not in
   `src/views/`.
 - All storage goes through the adapter in `src/storage.js`. All UI text goes in `src/i18n.js`,
@@ -44,6 +44,7 @@ src/model.js               car record, settings, migrate(), validation
 src/storage.js             storage adapter   src/backup.js backups   src/update.js update check
 src/i18n.js                all UI text (EN + DA)   src/version.js version   src/boot.js version label
 src/plate-data.js          plate lookup: reading the answer (plain)   src/lookup.js the call
+src/green-tax.js           green tax rate tables (TAX_YEAR; update the tables every January)
 test/*.test.mjs            unit tests           test/browser/*.spec.mjs browser tests
 ```
 

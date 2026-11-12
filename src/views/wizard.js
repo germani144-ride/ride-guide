@@ -201,6 +201,9 @@ function renderForm(ctx, draft, advance) {
     }
   }
 
+  if (step === 'running' && lookedUp.includes('greenTaxMo')) {
+    form.append(el('p', { class: 'hint lookup-note' }, t.lookup.foundTax));
+  }
   if (step === 'driving' && lookedUp.includes('kmPerUnit')) {
     form.append(el('p', { class: 'hint lookup-note' }, t.lookup.foundUse));
   }

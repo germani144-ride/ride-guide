@@ -22,7 +22,7 @@ const en = {
     },
     plateEntry: {
       title: 'Type the license plate',
-      hint: 'When you continue, the car, model year, fuel and fuel use are looked up in the Danish motor register.',
+      hint: 'When you continue, the car, model year, fuel, fuel use and green tax are looked up in the Danish motor register.',
       hintNoKey:
         'The plate is saved with the car. To have the car looked up from the plate, add a lookup key in Settings.',
     },
@@ -118,7 +118,15 @@ const en = {
     found: 'Filled in from the plate: {list}. Check it and correct anything that is off.',
     foundUse:
       'Filled in from the plate. This is the official figure; everyday driving usually uses more, so adjust it if you know your own.',
-    names: { name: 'the car', year: 'model year', fuel: 'fuel', kmPerUnit: 'fuel use' },
+    names: {
+      name: 'the car',
+      year: 'model year',
+      fuel: 'fuel',
+      kmPerUnit: 'fuel use',
+      greenTaxMo: 'green tax',
+    },
+    foundTax:
+      "Green tax filled in from the plate, at this year's official rates. Check it against your last bill.",
     errors: {
       notFound: 'No car found with that plate. Check the plate, or fill in the car yourself.',
       badKey: 'The lookup key was not accepted. Check it in Settings, or fill in the car yourself.',
@@ -290,7 +298,7 @@ const en = {
     updateAvailable: 'Version v{latest} is available (you have v{v}). Update now?',
     plate: {
       title: 'Plate lookup',
-      hint: 'With a lookup key, RideGuide fills in the car, model year, fuel and fuel use from the license plate. The key is free.',
+      hint: 'With a lookup key, RideGuide fills in the car, model year, fuel, fuel use and green tax from the license plate. The key is free.',
       key: 'Lookup key',
       keyHint: 'Kept on this device only. It is not included in backups.',
       getKey: 'Get a free key at Nummerplade Tjek',
@@ -339,7 +347,7 @@ const da = {
     },
     plateEntry: {
       title: 'Skriv nummerpladen',
-      hint: 'Når du fortsætter, slås bil, årgang, brændstof og forbrug op i Motorregistret.',
+      hint: 'Når du fortsætter, slås bil, årgang, brændstof, forbrug og grøn ejerafgift op i Motorregistret.',
       hintNoKey:
         'Nummerpladen gemmes med bilen. Vil du have bilen slået op ud fra nummerpladen, så tilføj en opslagsnøgle under Indstillinger.',
     },
@@ -431,7 +439,15 @@ const da = {
     found: 'Udfyldt ud fra nummerpladen: {list}. Tjek det, og ret det, der ikke passer.',
     foundUse:
       'Udfyldt ud fra nummerpladen. Det er det officielle tal; i daglig kørsel bruger bilen som regel mere, så ret det, hvis du kender dit eget.',
-    names: { name: 'bilen', year: 'årgang', fuel: 'brændstof', kmPerUnit: 'forbrug' },
+    names: {
+      name: 'bilen',
+      year: 'årgang',
+      fuel: 'brændstof',
+      kmPerUnit: 'forbrug',
+      greenTaxMo: 'grøn ejerafgift',
+    },
+    foundTax:
+      'Grøn ejerafgift udfyldt ud fra nummerpladen, efter årets officielle satser. Tjek den mod din seneste opkrævning.',
     errors: {
       notFound: 'Ingen bil fundet med den nummerplade. Tjek nummerpladen, eller udfyld bilen selv.',
       badKey: 'Opslagsnøglen blev ikke godkendt. Tjek den under Indstillinger, eller udfyld bilen selv.',
@@ -605,7 +621,7 @@ const da = {
     updateAvailable: 'Version v{latest} er klar (du har v{v}). Opdatér nu?',
     plate: {
       title: 'Nummerpladeopslag',
-      hint: 'Med en opslagsnøgle udfylder RideGuide bil, årgang, brændstof og forbrug ud fra nummerpladen. Nøglen er gratis.',
+      hint: 'Med en opslagsnøgle udfylder RideGuide bil, årgang, brændstof, forbrug og grøn ejerafgift ud fra nummerpladen. Nøglen er gratis.',
       key: 'Opslagsnøgle',
       keyHint: 'Gemmes kun på denne enhed. Den kommer ikke med i sikkerhedskopier.',
       getKey: 'Få en gratis nøgle hos Nummerplade Tjek',

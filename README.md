@@ -14,8 +14,8 @@ The app has three tabs:
 - **New car** (the landing page) asks one question per screen, from the most general to the
   most specific:
   1. Do you have the license plate? If yes, type it in (Danish format `AB 12 345`). With a
-     lookup key (see [Plate lookup](#plate-lookup)) the car, model year, fuel and fuel use are
-     filled in for you; check them and correct anything that is off.
+     lookup key (see [Plate lookup](#plate-lookup)) the car, model year, fuel, fuel use and green
+     tax are filled in for you; check them and correct anything that is off.
   2. Which car is it: make and model, model year, fuel (petrol, diesel or electric).
   3. How will you pay: pay upfront, finance or lease.
   4. The terms for that choice:
@@ -70,7 +70,17 @@ all work. The license plate is stored with the car.
 RideGuide can fill in a car from its Danish license plate: make and model, model year, fuel, and
 fuel use (km per litre, or km per kWh for electric cars, from the register's Wh per km). The
 fuel use is the official figure; everyday driving usually uses more, so adjust it if you know
-your own. Green tax and market value are not looked up yet.
+your own.
+
+Green tax is taken from the answer if it carries an amount. Otherwise it is worked out from the
+official rate tables (`src/green-tax.js`, Skatteministeriet's 2026 rates for
+brændstofforbrugsafgiftsloven), the same way the register does: cars first registered before
+3 October 2017 and up to 30 June 2021 pay by km per litre (two tables each for petrol and
+diesel), cars from 1 July 2021 by CO2 per km (electric cars: the lowest rate, 460 kr per half
+year). Diesel cars include the equalisation charge, plus 500 kr per half year without a particle
+filter. If the registration date or the figures are missing, the green tax is left for you to
+type. **The rates change every January: update `TAX_YEAR` and the tables then.** Market value is
+not looked up yet.
 
 Car data comes from [Nummerplade Tjek](https://nummerplade-tjek.dk), by
 [autotelli.dk](https://autotelli.dk), which republishes the Danish motor register.
@@ -164,8 +174,8 @@ saved, so switching back loses nothing).
 
 ## Planned
 
-- **More from the plate**: green tax and ideally market value (make, model, year, fuel and fuel
-  use are looked up today, see [Plate lookup](#plate-lookup)).
+- **More from the plate**: market value (make, model, year, fuel, fuel use and green tax are
+  looked up today, see [Plate lookup](#plate-lookup)).
 - **Today's Danish fuel and electricity prices**, fetched automatically instead of typed in
   Settings (they vary a lot). Needs a price source the app may call from the browser.
 - **Service plan for your own cars** (Garage): from the odometer reading, the last service and
@@ -204,6 +214,7 @@ src/compare.js                what the comparison highlights
 src/explain.js                how each part of the cost is calculated, in words (no DOM)
 src/plate-data.js             plate lookup: the address, reading the answer, filling in the car
 src/lookup.js                 plate lookup: the call to nummerplade-tjek.dk
+src/green-tax.js              green tax from the official rate tables (updated each January)
 src/engine.js                 the cost engine
 src/engine-sheet.js           sheet mode: the spreadsheet's formulas (tests only)
 src/model.js                  the car record, payment methods, settings, migrate(), validation
@@ -220,7 +231,7 @@ test/                         unit tests (*.test.mjs) and browser tests (browser
 
 Files without DOM, storage or network code, so they can run on a server too: `engine.js`,
 `engine-sheet.js`, `model.js`, `wizard-flow.js`, `format.js`, `compare.js`, `routes.js`,
-`explain.js` and `plate-data.js`.
+`explain.js`, `plate-data.js` and `green-tax.js`.
 
 ### Data flow
 
@@ -267,7 +278,9 @@ same `load()` and `save()`. When the shape of saved data changes, `STATE_VERSION
   - `test/wizard-flow.test.mjs` and `test/helpers.test.mjs`: the wizard's steps, number
     formatting, the comparison, routes and switches.
   - `test/plate-data.test.mjs`: the plate lookup: the address asked, reading the answer (petrol,
-    diesel, electric, missing pieces), the message for each failure, and the stored key.
+    diesel, electric, missing pieces, green tax), the message for each failure, and the stored key.
+  - `test/green-tax.test.mjs`: green tax for each table, at the boundaries, diesel extras, and
+    no guess when the figures are missing.
 - Browser tests (`npm run test:browser`, Playwright, Pixel 7 emulation): adding a car (cash and
   lease), History, the years and km bars, the comparison, a car's page, Settings (saving,
   reload, update check), English and Danish, starting offline, and the plate lookup (the test

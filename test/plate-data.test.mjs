@@ -70,8 +70,9 @@ test('missing pieces are left out, not guessed', () => {
 
 test('what was found goes on the car, and the filled fields are reported', () => {
   const car = newCar({ name: '', insuranceMo: 520 });
-  const filled = applyLookup(car, { name: 'Ford Mondeo', year: 2016, fuel: 'petrol' });
-  assert.deepEqual(filled, ['name', 'year', 'fuel']);
+  const filled = applyLookup(car, { name: 'Ford Mondeo', year: 2016, fuel: 'petrol', greenTaxMo: 215 });
+  assert.deepEqual(filled, ['name', 'year', 'fuel', 'greenTaxMo']);
+  assert.equal(car.greenTaxMo, 215);
   assert.equal(car.name, 'Ford Mondeo');
   assert.equal(car.year, 2016);
   assert.equal(car.kmPerUnit, 0); // not found: still to be typed
@@ -97,4 +98,57 @@ test('data upgrade to v10: the lookup key starts empty and survives a reload', (
   assert.equal(migrate({ ...s, plateKey: '  abc 123\n' }).plateKey, 'abc123');
   assert.equal(migrate({ ...s, plateKey: 42 }).plateKey, '');
   assert.equal(sanitizePlateKey('x'.repeat(500)).length, 200);
+});
+
+test('green tax: worked out from the registration date and fuel use, or CO2', () => {
+  const mondeo = carFromLookup(
+    answer(
+      {
+        make: 'FORD',
+        model: 'MONDEO',
+        model_year: 2016,
+        fuel_type: 'Benzin',
+        first_registration_date: '2016-05-12',
+      },
+      { fuel_usage: 16.9, co2_emission: 138 },
+    ),
+  );
+  assert.equal(mondeo.greenTaxMo, 215); // 1,290 kr per half year
+  const ev = carFromLookup(
+    answer(
+      {
+        make: 'TESLA',
+        model: 'MODEL Y',
+        fuel_type: 'El',
+        registration: { first_registration: '01-03-2022' },
+      },
+      {
+        ev_consumption: 160,
+      },
+    ),
+  );
+  assert.equal(ev.greenTaxMo, 76.67); // 460 kr per half year
+  const newPetrol = carFromLookup(
+    answer(
+      { make: 'KIA', fuel_type: 'Benzin', first_registration: '2023-02-01' },
+      { co2: { nedc: 99, wltp: 125 } },
+    ),
+  );
+  assert.equal(newPetrol.greenTaxMo, 126.67); // 760 kr: the WLTP figure counts
+});
+
+test('green tax: the amount in the answer wins; nothing to go on, nothing filled', () => {
+  const stated = carFromLookup(
+    answer({ make: 'FORD', fuel_type: 'Benzin', first_registration: '2016-05-12' }, { fuel_usage: 16.9 }),
+  );
+  assert.equal(stated.greenTaxMo, 215);
+  const withTax = { ...answer({ make: 'FORD', fuel_type: 'Benzin' }) };
+  withTax.data.taxes = { green_tax_half_year: 1200 };
+  assert.equal(carFromLookup(withTax).greenTaxMo, 200);
+  const yearly = answer({ make: 'FORD', fuel_type: 'Benzin', green_tax_yearly: 2400 });
+  assert.equal(carFromLookup(yearly).greenTaxMo, 200);
+  assert.equal(
+    carFromLookup(answer({ make: 'FORD', fuel_type: 'Benzin' }, { fuel_usage: 16.9 })).greenTaxMo,
+    undefined,
+  );
 });
