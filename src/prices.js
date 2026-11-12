@@ -39,14 +39,15 @@ export function sanitizePrices(raw) {
   return out;
 }
 
-// The spot prices for one area over the last 30 whole days, in DKK per MWh.
-export function spotUrl(area) {
+// The spot prices for both areas over the last 30 whole days, in DKK per MWh. One request: asking
+// twice in a row gets "429 Too Many Requests".
+export function spotUrl() {
   const q = new URLSearchParams({
     start: 'StartOfDay',
     startOffset: `-P${SPOT_DAYS}D`,
     end: 'StartOfDay',
-    filter: JSON.stringify({ PriceArea: [area] }),
-    columns: 'DayAheadPriceDKK',
+    filter: JSON.stringify({ PriceArea: AREAS }),
+    columns: 'PriceArea,DayAheadPriceDKK',
     limit: '0',
   });
   return `${EDS_ORIGIN}/dataset/DayAheadPrices?${q}`;
@@ -89,9 +90,11 @@ export function fuelFromOk(json) {
 }
 
 // The average spot price in kr per kWh (excl. VAT), or null. Reads DayAheadPriceDKK (DKK/MWh),
-// or SpotPriceDKK from the older dataset.
-export function spotFromEds(json) {
+// or SpotPriceDKK from the older dataset. With `area`, only that area's records count (records
+// without a PriceArea count for any area).
+export function spotFromEds(json, area = null) {
   const values = (Array.isArray(json?.records) ? json.records : [])
+    .filter(r => !area || r?.PriceArea == null || r.PriceArea === area)
     .map(r => num(r?.DayAheadPriceDKK ?? r?.SpotPriceDKK))
     .filter(v => Number.isFinite(v));
   if (!values.length) return null;
@@ -99,8 +102,9 @@ export function spotFromEds(json) {
 }
 
 // The file the GitHub Action writes: { updatedAt, petrol, diesel, spot: { DK1, DK2 } }, kr per
-// litre and kr per kWh excl. VAT. A source that failed this time keeps its value from `previous`.
-export function pricesFile({ ok, spot, previous = null, now = new Date() }) {
+// litre and kr per kWh excl. VAT. `ok`: OK's answer; `eds`: Energi Data Service's answer for both
+// areas. A source that failed this time keeps its value from `previous`.
+export function pricesFile({ ok, eds, previous = null, now = new Date() }) {
   const fuel = ok ? fuelFromOk(ok) : { petrol: null, diesel: null };
   const out = {
     updatedAt: now.toISOString(),
@@ -110,7 +114,7 @@ export function pricesFile({ ok, spot, previous = null, now = new Date() }) {
     sources: 'OK (mobility-prices.ok.dk), Energi Data Service DayAheadPrices, 30-day average',
   };
   for (const area of AREAS) {
-    const v = spot?.[area] ? spotFromEds(spot[area]) : null;
+    const v = eds ? spotFromEds(eds, area) : null;
     out.spot[area] = v != null ? Math.round(v * 10000) / 10000 : (previous?.spot?.[area] ?? null);
   }
   return out;

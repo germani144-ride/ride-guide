@@ -52,10 +52,11 @@ test('electricity: the average spot price in kr per kWh, and the home price', ()
   assert.equal(homePrice(0, 0.55), 0.55);
 });
 
-test('the spot price is asked for one area over the last 30 whole days', () => {
-  const url = new URL(spotUrl('DK2'));
+test('the spot price is asked for both areas at once, over the last 30 whole days', () => {
+  const url = new URL(spotUrl());
   assert.equal(url.origin + url.pathname, 'https://api.energidataservice.dk/dataset/DayAheadPrices');
-  assert.equal(url.searchParams.get('filter'), '{"PriceArea":["DK2"]}');
+  assert.equal(url.searchParams.get('filter'), '{"PriceArea":["DK1","DK2"]}');
+  assert.equal(url.searchParams.get('columns'), 'PriceArea,DayAheadPriceDKK');
   assert.equal(url.searchParams.get('startOffset'), '-P30D');
   assert.equal(url.searchParams.get('limit'), '0');
 });
@@ -125,9 +126,19 @@ test('prices.json: built from the sources; a source that failed keeps its last v
       },
     ],
   };
-  const dk2 = { records: [{ DayAheadPriceDKK: 1532.457 }, { DayAheadPriceDKK: 1596.595947 }] };
+  const eds = {
+    records: [
+      { PriceArea: 'DK2', DayAheadPriceDKK: 1532.457 },
+      { PriceArea: 'DK2', DayAheadPriceDKK: 1596.595947 },
+      { PriceArea: 'DK1', DayAheadPriceDKK: 900 },
+    ],
+  };
   const now = new Date('2026-11-12T04:17:00Z');
-  const file = pricesFile({ ok, spot: { DK1: null, DK2: dk2 }, previous: { spot: { DK1: 0.9 } }, now });
+  const both = pricesFile({ ok, eds, now });
+  assert.deepEqual(both.spot, { DK1: 0.9, DK2: 1.5645 });
+  // an answer with only DK2: DK1 keeps its last value
+  const dk2 = { records: eds.records.filter(r => r.PriceArea === 'DK2') };
+  const file = pricesFile({ ok, eds: dk2, previous: { spot: { DK1: 0.9 } }, now });
   assert.deepEqual(
     { ...file, sources: undefined },
     {
@@ -138,10 +149,10 @@ test('prices.json: built from the sources; a source that failed keeps its last v
       sources: undefined,
     },
   );
-  const failed = pricesFile({ ok: null, spot: {}, previous: file, now });
+  const failed = pricesFile({ ok: null, eds: null, previous: file, now });
   assert.equal(failed.petrol, 15.89);
   assert.equal(failed.spot.DK2, 1.5645);
-  assert.deepEqual(pricesFile({ ok: null, spot: {}, now }).spot, { DK1: null, DK2: null });
+  assert.deepEqual(pricesFile({ ok: null, eds: null, now }).spot, { DK1: null, DK2: null });
 });
 
 test('prices.json: what the app reads for its price area', () => {
