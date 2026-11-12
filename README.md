@@ -65,6 +65,26 @@ close the app or reinstall. It also shows whether a push actually went live.
 Numbers can be typed the Danish or English way: `13,69`, `13.69`, `250.000` and `250 000`
 all work. The license plate is stored with the car.
 
+### Today's prices
+
+Petrol, diesel and home electricity follow today's Danish prices by themselves: once a day (when
+the last prices are over 12 hours old) the app fetches them in the background and puts them in
+Settings, and every car's cost follows. **Settings → Today's prices** has the switch (turn it off
+to keep prices you typed), the electricity price area, the add-on below and a button to fetch now.
+Neither source needs a key.
+
+- **Petrol and diesel**: OK's public price list (`mobility-prices.ok.dk`), the pump price at every
+  OK station. RideGuide uses the median across stations of "Blyfri 95" and "Diesel" (premium and
+  HVO products are left out). Danish chains' prices move together, so one chain is a fair guide.
+- **Electricity at home**: the day-ahead spot price for your price area (DK1 west, DK2 east;
+  default DK2) from Energi Data Service (Energinet), averaged over the last 30 days, plus 25%
+  VAT, plus a fixed amount for grid tariffs, electricity tax and your supplier's fee (default
+  0.55 kr per kWh incl. VAT; edit it from your bill). So with a spot price of 0.68 kr:
+  0.68 × 1.25 + 0.55 = 1.40 kr per kWh.
+- **Public charging** has no open price source, so it stays as typed.
+
+If a source can't be reached, its prices stay as they were and the app tries again next time.
+
 ### Plate lookup
 
 RideGuide can fill in a car from its Danish license plate: make and model, model year, fuel, and
@@ -139,7 +159,7 @@ All prices are in today's money.
 | Loan interest | interest paid within the span, spread per month. Instalments follow PMT(ÅOP ÷ 12, loan period, loan). |
 | Repairs after buying | as typed, paid when you get the car (in "Paid up front"), spread evenly per month; not part of the car's value or the loan. The return that money could have earned is under money tied up. |
 | Lease | monthly lease + the one-time payment at the start + the return fee at the end, over the lease's own period, discounted. |
-| Fuel / power | km per month ÷ km per unit × price, growing by the yearly price change. Prices are settings shared by every car: petrol 17.50 and diesel 19.50 kr per litre (October 2026), electricity 1.40 kr per kWh at home and 3.50 at public chargers (FDM 2026). Electric: 80% home + 20% public, and 10% extra use in the cold. |
+| Fuel / power | km per month ÷ km per unit × price, growing by the yearly price change. Prices are settings shared by every car, by default today's prices (see [Today's prices](#todays-prices)); before the first fetch, petrol 17.50 and diesel 19.50 kr per litre (October 2026), electricity 1.40 kr per kWh at home and 3.50 at public chargers (FDM 2026). Electric: 80% home + 20% public, and 10% extra use in the cold. |
 | Insurance | as typed, per month (insurers keep charging the same). |
 | Maintenance and repairs | (yearly base + per km × km a year) ÷ 12 × (1 + 8% × age), age up to 15. Petrol 3,000 kr + 0.25 kr/km, diesel 3,500 kr + 0.25 kr/km, electric 2,000 kr + 0.15 kr/km. Skipped when the lease includes service. |
 | Tyres | km × (four tyres 3,500 kr ÷ tyre life 30,000 km; electric 25,000 km), plus two swaps a year (400 kr each) with winter tyres. Skipped when the lease includes tyres. |
@@ -174,8 +194,6 @@ saved, so switching back loses nothing).
 
 ## Planned
 
-- **Today's Danish fuel and electricity prices**, fetched automatically instead of typed in
-  Settings (they vary a lot). Needs a price source the app may call from the browser.
 - **Service plan for your own cars** (Garage): from the odometer reading, the last service and
   your km per year, show what is due and roughly when (e.g. "around March 2027, 60,000 km: oil
   and oil filter, air filter"), starting from a general schedule by fuel type that you can edit
@@ -213,6 +231,8 @@ src/explain.js                how each part of the cost is calculated, in words 
 src/plate-data.js             plate lookup: the address, reading the answer, filling in the car
 src/lookup.js                 plate lookup: the call to nummerplade-tjek.dk
 src/green-tax.js              green tax from the official rate tables (updated each January)
+src/prices.js                 today's prices: the sources, reading them, the home electricity price
+src/price-fetch.js            today's prices: the calls to OK and Energi Data Service
 src/engine.js                 the cost engine
 src/engine-sheet.js           sheet mode: the spreadsheet's formulas (tests only)
 src/model.js                  the car record, payment methods, settings, migrate(), validation
@@ -229,7 +249,7 @@ test/                         unit tests (*.test.mjs) and browser tests (browser
 
 Files without DOM, storage or network code, so they can run on a server too: `engine.js`,
 `engine-sheet.js`, `model.js`, `wizard-flow.js`, `format.js`, `compare.js`, `routes.js`,
-`explain.js`, `plate-data.js` and `green-tax.js`.
+`explain.js`, `plate-data.js`, `green-tax.js` and `prices.js`.
 
 ### Data flow
 
@@ -254,8 +274,9 @@ as a reference.
 ### Storage
 
 Everything is stored on the phone, in `localStorage` under the key `rideguide.v1`, as one JSON
-object: `{ version, lang, settings, cars, draft, plateKey }`. `draft` is a car being added in
-the wizard; `plateKey` is your own key for the plate lookup (left out of backups).
+object: `{ version, lang, settings, cars, draft, plateKey, prices }`. `draft` is a car being
+added in the wizard; `plateKey` is your own key for the plate lookup (left out of backups);
+`prices` holds the Today's prices choices and when prices were last fetched.
 Only `src/storage.js` touches storage; moving to a server later means one more adapter with the
 same `load()` and `save()`. When the shape of saved data changes, `STATE_VERSION` goes up and
 `migrate()` in `src/model.js` upgrades older data (with a test). Backups are the same JSON.
@@ -279,11 +300,15 @@ same `load()` and `save()`. When the shape of saved data changes, `STATE_VERSION
     diesel, electric, missing pieces, green tax), the message for each failure, and the stored key.
   - `test/green-tax.test.mjs`: green tax for each table, at the boundaries, diesel extras, and
     no guess when the figures are missing.
+  - `test/prices.test.mjs`: today's prices: the median pump price, the spot average, the home
+    electricity price, when to fetch again, and the data upgrade.
 - Browser tests (`npm run test:browser`, Playwright, Pixel 7 emulation): adding a car (cash and
   lease), History, the years and km bars, the comparison, a car's page, Settings (saving,
   reload, update check), English and Danish, starting offline, and the plate lookup (the test
 plays the lookup service: a car found, a plate not found, no key, and the key staying out of a
-backup). The date is fixed so the
+backup), and today's prices (fetched by themselves, the add-on and price area, automatic updates
+off, a source that can't be reached). Every test plays the two price sources with prices equal
+to the defaults, so no test reaches the internet. The date is fixed so the
   expected numbers stay put, and any console error, including a Content-Security-Policy
   violation, fails the test.
 
@@ -304,11 +329,13 @@ The pieces that would change for a commercial version are kept separate:
 
 ## Security
 
-Your cars and settings stay on the phone. The one thing RideGuide sends out is a plate lookup,
-and only if you added a lookup key: the plate and your key go to `nummerplade-tjek.dk`.
+Your cars and settings stay on the phone. RideGuide sends out only two things: a plate lookup,
+if you added a lookup key (the plate and your key go to `nummerplade-tjek.dk`), and the request
+for today's prices, which carries nothing about you (to `mobility-prices.ok.dk` and
+`api.energidataservice.dk`; the price area is the only choice it includes).
 `index.html` sets a strict Content-Security-Policy: scripts, styles, fonts and images may only
-come from RideGuide's own address, and network requests may only go there or to
-`https://nummerplade-tjek.dk`, so no injected or third-party script can run or send data
+come from RideGuide's own address, and network requests may only go there or to those three
+addresses, so no injected or third-party script can run or send data
 elsewhere. Keep it that way: no inline `<script>` blocks or `onclick="…"` attributes (put code in
 `src/`), and if a feature ever needs another address (a price service), add exactly that address
 to `connect-src` in the policy. No key or token is ever committed to this repository.

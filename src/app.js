@@ -5,6 +5,8 @@ import { createLocalStorageAdapter } from './storage.js';
 import { STRINGS } from './i18n.js';
 import { SEED_CARS } from './seed.js';
 import { toast } from './ui.js';
+import { pricesStale, applyPrices } from './prices.js';
+import { fetchPrices } from './price-fetch.js';
 import { renderTabs } from './views/tabs.js';
 import { renderWizard } from './views/wizard.js';
 import { newDraft } from './wizard-flow.js';
@@ -134,6 +136,27 @@ function tryOtherMethod(id) {
   go('#/new');
 }
 
+// Fetches today's prices and puts them in the settings. `force`: even if they are fresh (the
+// button in Settings). Resolves to the fetched prices, or null if nothing was asked.
+let fetchingPrices = null;
+async function updatePrices({ force = false } = {}) {
+  if (fetchingPrices) return fetchingPrices;
+  if (!force && (!state.prices.auto || !pricesStale(state.prices.updatedAt))) return null;
+  fetchingPrices = (async () => {
+    const fetched = await fetchPrices(state.prices.area);
+    const changed = applyPrices(state.settings, state.prices, fetched);
+    save();
+    // Costs on screen follow the new prices; don't redraw under someone typing.
+    if ((changed.length || force) && !document.activeElement?.matches?.('input,textarea,select')) render();
+    return fetched;
+  })();
+  try {
+    return await fetchingPrices;
+  } finally {
+    fetchingPrices = null;
+  }
+}
+
 function exportBackup() {
   downloadBackup(state);
 }
@@ -184,6 +207,7 @@ function render({ animate = false, back = false } = {}) {
     tryOtherMethod,
     exportBackup,
     importBackup,
+    updatePrices,
   };
   document.documentElement.lang = state.lang;
 
@@ -214,6 +238,10 @@ async function start() {
   });
   window.addEventListener('pagehide', flush);
   render();
+  updatePrices(); // once a day, in the background
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') updatePrices();
+  });
   const splash = document.getElementById('splash');
   if (splash) {
     setTimeout(

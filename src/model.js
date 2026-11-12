@@ -1,10 +1,11 @@
 // Car data model. Pure functions: no DOM, no storage, no network.
 import { DEFAULT_SETTINGS } from './engine.js';
+import { DEFAULT_PRICES, sanitizePrices } from './prices.js';
 
 // A saved car keeps every number it has ever been given, so switching payment method and back
 // loses nothing. toEngineInput() decides which numbers count for the chosen method.
 
-export const STATE_VERSION = 10;
+export const STATE_VERSION = 11;
 export const METHODS = ['cash', 'finance', 'lease'];
 export const FUELS = ['petrol', 'diesel', 'electric'];
 
@@ -230,6 +231,7 @@ export function emptyState(lang = 'en') {
     cars: [],
     draft: null,
     plateKey: '', // the user's own key for the plate lookup; stays on this device
+    prices: { ...DEFAULT_PRICES }, // today's prices: source settings and when they were fetched
   };
 }
 
@@ -269,6 +271,8 @@ export function migrate(raw, fallbackLang = 'en') {
     if (raw.settings?.petrolPrice === 13.69) state.settings.petrolPrice = DEFAULT_SETTINGS.petrolPrice;
     if (raw.settings?.dieselPrice === 13.29) state.settings.dieselPrice = DEFAULT_SETTINGS.dieselPrice;
   }
+  // v11: today's fuel and electricity prices are fetched (state.prices; on by default).
+  state.prices = sanitizePrices(raw.prices);
   // v10: the user's own key for the plate lookup (empty: no lookup).
   state.plateKey = sanitizePlateKey(raw.plateKey);
   // v9: owned cars can have repairs paid right after buying (0 = none), filled in by sanitizeCar().

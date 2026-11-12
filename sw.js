@@ -51,6 +51,8 @@ const SHELL = [
   './src/explain.js',
   './src/plate-data.js',
   './src/green-tax.js',
+  './src/prices.js',
+  './src/price-fetch.js',
   './src/lookup.js',
   './fonts/barlow-latin-400-normal.woff2',
   './fonts/barlow-latin-500-normal.woff2',

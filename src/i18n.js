@@ -251,7 +251,7 @@ const en = {
       running: ['Running costs', 'Used for every car unless the lease includes them.'],
       energy: [
         'Fuel and electricity',
-        "Prices shared by every car. Fetching today's Danish prices automatically is planned.",
+        "Prices shared by every car. Petrol, diesel and home electricity can follow today's Danish prices; public charging you set yourself.",
       ],
     },
     fields: {
@@ -296,6 +296,27 @@ const en = {
     upToDate: "You're on the latest version (v{v}).",
     unreachable: "Couldn't reach the server. Check the connection and try again.",
     updateAvailable: 'Version v{latest} is available (you have v{v}). Update now?',
+    prices: {
+      title: "Today's prices",
+      auto: 'Update prices automatically',
+      autoHint:
+        "Once a day, petrol, diesel and home electricity above are replaced by today's prices. Turn off to keep your own.",
+      area: 'Electricity price area',
+      areas: { DK1: 'DK1, west', DK2: 'DK2, east' },
+      addOn: 'On top of the spot price',
+      addOnHint:
+        "Grid tariffs, electricity tax and your supplier's fee per kWh, incl. VAT. Find them on your electricity bill.",
+      fetch: "Get today's prices",
+      fetching: 'Getting prices…',
+      never: 'Not fetched yet.',
+      updated: 'Updated {when}.',
+      fuel: 'Petrol {petrol} and diesel {diesel} kr per litre: the typical pump price at OK.',
+      el: 'Home electricity {home} kr per kWh: spot price {spot} kr ({area}, average of the last 30 days) plus 25% VAT, plus {addOn} kr.',
+      failed: "Couldn't get today's prices. Check the connection and try again.",
+      partial: "Some prices couldn't be fetched; the others were updated.",
+      done: 'Prices updated',
+      credit: 'Prices from OK and Energi Data Service (Energinet).',
+    },
     plate: {
       title: 'Plate lookup',
       hint: 'With a lookup key, RideGuide fills in the car, model year, fuel, fuel use and green tax from the license plate. The key is free.',
@@ -574,7 +595,7 @@ const da = {
       running: ['Driftsudgifter', 'Bruges for alle biler, medmindre leasingen dækker dem.'],
       energy: [
         'Brændstof og el',
-        'Priser, der gælder for alle biler. Automatisk hentning af dagens danske priser er planlagt.',
+        'Priser, der gælder for alle biler. Benzin, diesel og el derhjemme kan følge dagens danske priser; offentlig opladning sætter du selv.',
       ],
     },
     fields: {
@@ -619,6 +640,27 @@ const da = {
     upToDate: 'Du har den nyeste version (v{v}).',
     unreachable: 'Kunne ikke nå serveren. Tjek forbindelsen, og prøv igen.',
     updateAvailable: 'Version v{latest} er klar (du har v{v}). Opdatér nu?',
+    prices: {
+      title: 'Dagens priser',
+      auto: 'Opdatér priser automatisk',
+      autoHint:
+        'En gang om dagen erstattes benzin, diesel og el derhjemme ovenfor af dagens priser. Slå fra for at beholde dine egne.',
+      area: 'Elprisområde',
+      areas: { DK1: 'DK1, vest', DK2: 'DK2, øst' },
+      addOn: 'Oven i spotprisen',
+      addOnHint:
+        'Nettarif, elafgift og dit elselskabs tillæg pr. kWh, inkl. moms. Du finder dem på din elregning.',
+      fetch: 'Hent dagens priser',
+      fetching: 'Henter priser…',
+      never: 'Ikke hentet endnu.',
+      updated: 'Opdateret {when}.',
+      fuel: 'Benzin {petrol} og diesel {diesel} kr. pr. liter: den typiske pumpepris hos OK.',
+      el: 'El derhjemme {home} kr. pr. kWh: spotpris {spot} kr. ({area}, gennemsnit af de sidste 30 dage) plus 25 % moms, plus {addOn} kr.',
+      failed: 'Kunne ikke hente dagens priser. Tjek forbindelsen, og prøv igen.',
+      partial: 'Nogle priser kunne ikke hentes; de andre blev opdateret.',
+      done: 'Priser opdateret',
+      credit: 'Priser fra OK og Energi Data Service (Energinet).',
+    },
     plate: {
       title: 'Nummerpladeopslag',
       hint: 'Med en opslagsnøgle udfylder RideGuide bil, årgang, brændstof, forbrug og grøn ejerafgift ud fra nummerpladen. Nøglen er gratis.',
