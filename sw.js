@@ -43,6 +43,8 @@ const SHELL = [
   './src/views/fields.js',
   './src/views/result.js',
   './src/views/tabs.js',
+  './src/views/swipe-tabs.js',
+  './src/swipe.js',
   './src/backup.js',
   './src/wizard-flow.js',
   './src/format.js',

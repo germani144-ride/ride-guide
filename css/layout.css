@@ -198,3 +198,81 @@
   margin-left: 4px;
   font-variant-numeric: tabular-nums;
 }
+
+/* Swipe between tabs (src/views/swipe-tabs.js). The browser keeps vertical scrolling; sideways
+   movement is left to the swipe. */
+#view {
+  touch-action: pan-y pinch-zoom;
+}
+
+#view.swipe-return {
+  transition:
+    transform 0.2s ease-out,
+    opacity 0.2s ease-out;
+}
+
+#view.swipe-in-right {
+  animation: swipe-in-right 0.24s ease-out;
+}
+
+#view.swipe-in-left {
+  animation: swipe-in-left 0.24s ease-out;
+}
+
+@keyframes swipe-in-right {
+  from {
+    opacity: 0.4;
+    transform: translateX(30%);
+  }
+}
+
+@keyframes swipe-in-left {
+  from {
+    opacity: 0.4;
+    transform: translateX(-30%);
+  }
+}
+
+/* The tab a swipe leads to, at the screen edge it comes from. */
+.swipe-label {
+  position: fixed;
+  top: 50%;
+  z-index: 20;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--ink-2);
+  font-weight: 600;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(-50%);
+  transition:
+    opacity 0.12s,
+    background-color 0.12s,
+    color 0.12s;
+}
+
+.swipe-label.left {
+  left: 12px;
+}
+
+.swipe-label.right {
+  right: 12px;
+}
+
+.swipe-label.show {
+  opacity: 0.85;
+}
+
+.swipe-label.armed {
+  opacity: 1;
+  background: var(--asphalt);
+  color: var(--concrete);
+  border-color: var(--asphalt);
+}
+
+.tab.swipe-armed {
+  color: var(--asphalt);
+  background: var(--line-soft);
+}

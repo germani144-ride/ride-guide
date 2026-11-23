@@ -111,7 +111,7 @@
 /* Plate lookup: what went wrong (under the plate), and what was filled in (on the next steps). */
 .lookup-status {
   margin-top: 12px;
-  color: var(--ink);
+  color: var(--asphalt);
 }
 
 .lookup-status:empty {

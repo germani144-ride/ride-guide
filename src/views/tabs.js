@@ -2,11 +2,11 @@
 import { el, svg, ICONS } from '../ui.js';
 import { activeTab } from '../routes.js';
 
-const TABS = [
-  ['#/new', 'new', ICONS.plus],
-  ['#/garage', 'garage', ICONS.garage],
-  ['#/history', 'history', ICONS.history],
-];
+import { TAB_ORDER } from '../swipe.js';
+
+// In TAB_ORDER, which swiping between tabs follows too.
+const ICON = { new: ICONS.plus, garage: ICONS.garage, history: ICONS.history };
+const TABS = TAB_ORDER.map(key => [`#/${key}`, key, ICON[key]]);
 
 // `carIsMine`: whether the car on a #/car/ page is in the garage (its page then belongs to Garage).
 export function renderTabs(route, t, carIsMine) {

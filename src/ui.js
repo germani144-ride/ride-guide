@@ -57,7 +57,7 @@ export function breakdownBar(parts, t, lang, why = null) {
   const all = PART_KEYS.map(k => [k, parts[k] || 0]).filter(([, v]) => Math.abs(v) > 0.5);
   const items = all.filter(([, v]) => v > 0);
   const sum = items.reduce((a, [, v]) => a + v, 0) || 1;
-  const bar = el('div', { class: 'bar', role: 'img' });
+  const bar = el('div', { class: 'bar', role: 'img', 'data-noswipe': true });
   bar.setAttribute(
     'aria-label',
     items.map(([k, v]) => `${t.shares[k]} ${Math.round((v / sum) * 100)}%`).join(', '),
@@ -155,7 +155,7 @@ function choiceBar(ctx, key, choices, label, show, { selected, allowed = () => t
   const current = selected ?? state.settings[key];
   return el(
     'div',
-    { class: 'field span-field' },
+    { class: 'field span-field', 'data-noswipe': true }, // choices to tap, not to swipe
     el('span', { class: 'label' }, label),
     el(
       'div',
@@ -200,7 +200,7 @@ export function assumptionBars(ctx, car = null) {
     period.fixed || !SPAN_CHOICES.some(allowed)
       ? el(
           'div',
-          { class: 'field span-field' },
+          { class: 'field span-field', 'data-noswipe': true }, // choices to tap, not to swipe
           el('span', { class: 'label' }, t.compare.span),
           el('p', { class: 'span-locked' }, period.fixed ? fmt(t.result.leaseFixedSpan, { span }) : span),
         )

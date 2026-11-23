@@ -8,9 +8,11 @@ import { toast } from './ui.js';
 import { pricesStale, applyPrices } from './prices.js';
 import { fetchPrices } from './price-fetch.js';
 import { renderTabs } from './views/tabs.js';
+import { swipeTabs } from './views/swipe-tabs.js';
 import { renderWizard } from './views/wizard.js';
 import { newDraft } from './wizard-flow.js';
-import { parseRoute, keepsCompareSelection } from './routes.js';
+import { parseRoute, keepsCompareSelection, activeTab } from './routes.js';
+import { FIRST_STEP } from './wizard-flow.js';
 import { renderGarage, renderHistory, renderCar, renderCompare } from './views/cars.js';
 import { renderSettings } from './views/settings.js';
 
@@ -185,6 +187,7 @@ function findCar(id) {
 }
 
 let lastRoute = '';
+let swipeEnter = ''; // set by a swipe: the next render slides in from that side
 function render({ animate = false, back = false } = {}) {
   const { route, name, id, ids } = parseRoute(location.hash);
   if (!keepsCompareSelection(route)) {
@@ -221,6 +224,12 @@ function render({ animate = false, back = false } = {}) {
 
   const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   if (animate && !reduce) node.classList.add(back ? 'enter-back' : 'enter');
+  view.classList.remove('swipe-in-left', 'swipe-in-right');
+  if (swipeEnter && !reduce) {
+    void view.offsetWidth; // restart the animation
+    view.classList.add(swipeEnter);
+  }
+  swipeEnter = '';
   view.replaceChildren(node);
   renderTabs(route, t(), name === 'car' && Boolean(findCar(id)?.mine));
   if (route !== lastRoute || animate) window.scrollTo(0, 0);
@@ -237,6 +246,20 @@ async function start() {
     if (document.visibilityState === 'hidden') flush();
   });
   window.addEventListener('pagehide', flush);
+  swipeTabs(view, {
+    context: () => {
+      const { route, name, id } = parseRoute(location.hash);
+      const tab = activeTab(route, name === 'car' && Boolean(findCar(id)?.mine));
+      // Inside the wizard (past its first question) a swipe never leaves the car being added.
+      const blocked = name === 'new' && Boolean(state.draft) && state.draft.step !== FIRST_STEP;
+      return { tab, blocked };
+    },
+    labelFor: (tab, dir) => (dir === 'next' ? `${t().nav[tab]} ›` : `‹ ${t().nav[tab]}`),
+    go: (tab, dir) => {
+      swipeEnter = dir === 'next' ? 'swipe-in-right' : 'swipe-in-left';
+      go(`#/${tab}`);
+    },
+  });
   render();
   updatePrices(); // once a day, in the background
   document.addEventListener('visibilitychange', () => {

@@ -39,6 +39,22 @@ The app has three tabs:
 - **Garage** shows the cars you marked as yours.
 - **History** shows every car you have added. Tap **Compare** to put 2 or 3 side by side.
 
+**Swipe between tabs**, like Lift Log and Nap Log: swipe left for the next tab and right for the
+previous one, in the bottom bar's order (New car, Garage, History). The page follows the finger
+(half the distance) and fades slightly, and a label at the screen edge names the tab you're
+heading to ("History ›", "‹ New car"). Past 70px the label and that tab's button light up and
+letting go switches tab, the new one sliding in from that side; a shorter swipe springs back. At
+the first and last tab the page only gives a little and nothing switches.
+
+A swipe only starts after 10px sideways and 1.2× more sideways than vertical, and 12px of
+vertical movement first makes it a scroll, so scrolling always wins. Two fingers never swipe.
+Nothing swipes in fields, selects and sliders, on the top and bottom bars, inside the wizard
+(once you're past its first question) or any form or dialog, or on anything marked
+`data-noswipe` (the cost bar, the years and km choices, the comparison). With reduced motion
+turned on in the phone's settings the tab switches without the slide. The touch listeners are
+passive and there is no library: `src/swipe.js` (plain: which tab is next, how a movement is
+read) and `src/views/swipe-tabs.js` (follows the finger).
+
 Years of ownership (default 3) and km per year (default 10,000) are the same for every car, so
 cars are always compared on equal terms. Two bars at the top of Garage, History, the comparison,
 a car's page and the result change them for all cars at once (also in Settings). A car only stores
@@ -232,7 +248,9 @@ src/app.js                    the shell: app state, saving, routing, the actions
 src/routes.js                 addresses (#/new, #/garage, #/history, #/car/:id, #/compare/:ids,
                               #/settings) and which tab is active
 src/views/                    the screens: wizard, result, cars (Garage, History, car page,
-                              comparison), settings; and their parts: fields, tabs
+                              comparison), settings; and their parts: fields, tabs,
+                              swipe-tabs (swiping between tabs)
+src/swipe.js                  swipe between tabs: tab order, which tab is next, reading a movement
 src/wizard-flow.js            the New car wizard's steps: order, fields, switches
 src/ui.js                     shared interface pieces (el(), price, breakdown, bars, plate, toast)
 src/format.js                 numbers in English or Danish
@@ -307,6 +325,8 @@ same `load()` and `save()`. When the shape of saved data changes, `STATE_VERSION
   - `test/model.test.mjs`: payment methods, data upgrades (v0.1 to v9), switches, plates, number
     parsing, validation, the breakdown adding up, the version matching in `src/version.js` and
     `package.json`, the update check, and every app file being in the offline list in `sw.js`.
+  - `test/swipe.test.mjs`: which tab a swipe leads to, when a movement is a swipe or a scroll,
+    and how far the page follows.
   - `test/wizard-flow.test.mjs` and `test/helpers.test.mjs`: the wizard's steps, number
     formatting, the comparison, routes and switches.
   - `test/plate-data.test.mjs`: the plate lookup: the address asked, reading the answer (petrol,
@@ -321,7 +341,9 @@ same `load()` and `save()`. When the shape of saved data changes, `STATE_VERSION
   reload, update check), English and Danish, starting offline, and the plate lookup (the test
 plays the lookup service: a car found, a plate not found, no key, and the key staying out of a
 backup), and today's prices (fetched by themselves, the add-on and price area, automatic updates
-off, the file can't be read). Every test plays `prices.json` with prices equal to the defaults,
+off, the file can't be read), and swiping between tabs with real touch events (a swipe
+switches, a short one springs back, the last tab resists, scrolling and swiping in a field or
+on the choices don't switch, reduced motion). Every test plays `prices.json` with prices equal to the defaults,
 so no test reaches the internet. The date is fixed so the
   expected numbers stay put, and any console error, including a Content-Security-Policy
   violation, fails the test.

@@ -12,7 +12,7 @@
 - Do not change a formula or a default in `src/engine.js` without the owner's approval; when one
   changes on purpose, update its tests and the formula table in README.md in the same change.
 - Keep `src/engine.js`, `src/engine-sheet.js`, `src/model.js`, `src/wizard-flow.js`,
-  `src/format.js`, `src/compare.js`, `src/routes.js`, `src/explain.js`, `src/plate-data.js`, `src/green-tax.js` and `src/prices.js` free of DOM, storage and network code
+  `src/format.js`, `src/compare.js`, `src/routes.js`, `src/explain.js`, `src/plate-data.js`, `src/green-tax.js`, `src/prices.js` and `src/swipe.js` free of DOM, storage and network code
   (plain functions with unit tests) so they can move to a backend. Logic goes there, not in
   `src/views/`.
 - All storage goes through the adapter in `src/storage.js`. All UI text goes in `src/i18n.js`,
@@ -45,6 +45,7 @@ src/storage.js             storage adapter   src/backup.js backups   src/update.
 src/i18n.js                all UI text (EN + DA)   src/version.js version   src/boot.js version label
 src/plate-data.js          plate lookup: reading the answer (plain)   src/lookup.js the call
 src/green-tax.js           green tax rate tables (TAX_YEAR; update the tables every January)
+src/swipe.js               swipe between tabs (plain)   src/views/swipe-tabs.js follows the finger
 src/prices.js              today's prices (plain)   src/price-fetch.js reads prices.json
 scripts/fetch-prices.mjs   run by .github/workflows/prices.yml twice a day; writes and commits prices.json
 test/*.test.mjs            unit tests           test/browser/*.spec.mjs browser tests

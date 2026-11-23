@@ -314,7 +314,7 @@ export function renderCompare(ctx, ids) {
     el('a', { class: 'back', href: '#/history' }, svg(ICONS.back), t.history.title),
     el('header', { class: 'view-head' }, el('h1', {}, t.compare.title)),
     assumptionBars(ctx),
-    el('div', { class: `compare-grid n${cols.length}` }, cols),
+    el('div', { class: `compare-grid n${cols.length}`, 'data-noswipe': true }, cols),
     legend,
   );
 }
