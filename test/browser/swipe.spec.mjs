@@ -130,3 +130,67 @@ test('the bottom bar is updated in place, not rebuilt, so it does not flicker', 
     .evaluate(a => getComputedStyle(a).webkitTapHighlightColor);
   expect(flash).toBe('rgba(0, 0, 0, 0)');
 });
+
+// Every frame while swiping: the page is never wider than the screen (which made Chrome re-fit
+// the page and push the fixed bottom bar below the screen edge), and the bar stays at the bottom.
+test('swiping never makes the page wider than the screen, and the bottom bar stays put', async ({
+  page,
+  app,
+}) => {
+  const startWatch = () =>
+    page.evaluate(() => {
+      window.__bad = [];
+      window.__frames = 0;
+      const tick = () => {
+        const doc = document.documentElement;
+        const bar = document.getElementById('tabs').getBoundingClientRect();
+        const width = window.innerWidth;
+        if (doc.scrollWidth > width) window.__bad.push(`scrollWidth ${doc.scrollWidth} > ${width}`);
+        if (Math.abs(bar.bottom - window.innerHeight) > 1)
+          window.__bad.push(`bar bottom ${bar.bottom} vs screen ${window.innerHeight}`);
+        window.__frames++;
+        window.__raf = requestAnimationFrame(tick);
+      };
+      tick();
+    });
+  const stopWatch = async () => {
+    await page.waitForTimeout(400); // let the slide-in and spring-back finish
+    return page.evaluate(() => {
+      cancelAnimationFrame(window.__raf);
+      return { bad: [...new Set(window.__bad)], frames: window.__frames };
+    });
+  };
+  const { x, y } = await mid(page);
+  const check = async (label, swipes) => {
+    await startWatch();
+    for (const [dx, opts] of swipes) await drag(page, x - dx / 2, y, dx, 0, opts);
+    const { bad, frames } = await stopWatch();
+    expect(frames, label).toBeGreaterThan(5);
+    expect(bad, label).toEqual([]);
+  };
+
+  await app.open('#/garage');
+  const slow = { steps: 30 };
+  const fast = { steps: 3 };
+  await check('slow, both ways', [
+    [-220, slow], // to History
+    [220, slow], // back to Garage
+  ]);
+  await check('fast, both ways', [
+    [-220, fast],
+    [220, fast],
+  ]);
+  await check('short swipes that spring back', [
+    [-50, slow],
+    [50, slow],
+  ]);
+
+  // scrolled down on a long page
+  await app.open('#/history');
+  await page.evaluate(() => window.scrollTo(0, 400));
+  await check('scrolled down: resisting at the last tab, then to Garage', [
+    [-220, slow],
+    [220, fast],
+  ]);
+  await expect(page).toHaveURL(/#\/garage$/);
+});

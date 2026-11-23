@@ -96,6 +96,16 @@
   box-sizing: border-box;
 }
 
+/* The page can never get wider than the screen (as in Nap Log). Swiping slides #view sideways;
+   without this the page grew wider (510px on a 412px phone), Chrome re-fitted it and the fixed
+   bottom bar ended up below the screen edge. clip, where supported, also keeps sticky elements
+   working; vertical scrolling is unchanged. */
+html,
+body {
+  overflow-x: hidden;
+  overflow-x: clip;
+}
+
 html {
   -webkit-text-size-adjust: 100%;
 }
