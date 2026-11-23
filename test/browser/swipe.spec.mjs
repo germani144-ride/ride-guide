@@ -114,3 +114,19 @@ test.describe('with reduced motion', () => {
     await expect(page.locator('#view')).not.toHaveClass(/swipe-in/);
   });
 });
+
+test('the bottom bar is updated in place, not rebuilt, so it does not flicker', async ({ page, app }) => {
+  await app.open('#/history');
+  await page.locator('#tabs a[href="#/garage"]').evaluate(a => (a.dataset.marker = 'same'));
+  await page.locator('#tabs').getByRole('link', { name: 'Garage' }).click();
+  await expect(page.locator('#tabs a[aria-current="page"]')).toHaveText('Garage');
+  await page.locator('#tabs').getByRole('link', { name: 'New car' }).click();
+  await expect(page.locator('#tabs a[aria-current="page"]')).toHaveText('New car');
+  await expect(page.locator('#tabs a[data-marker="same"]')).toHaveCount(1);
+  await expect(page.locator('#tabs a[aria-current]')).toHaveCount(1);
+  const flash = await page
+    .locator('#tabs a')
+    .first()
+    .evaluate(a => getComputedStyle(a).webkitTapHighlightColor);
+  expect(flash).toBe('rgba(0, 0, 0, 0)');
+});

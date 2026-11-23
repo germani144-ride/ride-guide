@@ -43,6 +43,16 @@
   border-top: 1px solid var(--line-soft);
 }
 
+/* No grey tap flash on the bars (Android); the tabs show their own pressed state instead. */
+.tabs a,
+.topbar a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tab:active {
+  background: var(--line-soft);
+}
+
 .tab {
   flex: 1;
   max-width: 180px;

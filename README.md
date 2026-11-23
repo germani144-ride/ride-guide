@@ -55,6 +55,10 @@ turned on in the phone's settings the tab switches without the slide. The touch 
 passive and there is no library: `src/swipe.js` (plain: which tab is next, how a movement is
 read) and `src/views/swipe-tabs.js` (follows the finger).
 
+The bottom bar is built once and then only updated (which tab is current, the language), and the
+bars have no tap highlight: rebuilding the bar on every tab change made Android's grey tap flash
+blink for a frame.
+
 Years of ownership (default 3) and km per year (default 10,000) are the same for every car, so
 cars are always compared on equal terms. Two bars at the top of Garage, History, the comparison,
 a car's page and the result change them for all cars at once (also in Settings). A car only stores
@@ -343,7 +347,7 @@ plays the lookup service: a car found, a plate not found, no key, and the key st
 backup), and today's prices (fetched by themselves, the add-on and price area, automatic updates
 off, the file can't be read), and swiping between tabs with real touch events (a swipe
 switches, a short one springs back, the last tab resists, scrolling and swiping in a field or
-on the choices don't switch, reduced motion). Every test plays `prices.json` with prices equal to the defaults,
+on the choices don't switch, reduced motion, and the bottom bar not being rebuilt). Every test plays `prices.json` with prices equal to the defaults,
 so no test reaches the internet. The date is fixed so the
   expected numbers stay put, and any console error, including a Content-Security-Policy
   violation, fails the test.
