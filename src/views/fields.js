@@ -63,13 +63,13 @@ export function numberField(field, car, t, lang, ctx, errorNodes, { label = fiel
     type: 'text',
     inputmode: decimals ? 'decimal' : 'numeric',
     'data-field': field,
-    value: toInputText(field, car[field], lang),
+    value: toInputText(field, car[field], lang, car),
     placeholder: '0',
     autocomplete: 'off',
     'aria-describedby': `err-${field}${help ? ` help-${field}` : ''}`,
     oninput: e => {
       const v = parseNumber(e.target.value);
-      car[field] = v == null ? 0 : fromShown(field, v);
+      car[field] = v == null ? 0 : fromShown(field, v, car);
       ctx.save();
     },
   });

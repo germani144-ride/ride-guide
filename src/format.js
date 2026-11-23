@@ -23,8 +23,8 @@ export function inputNumberText(v, lang) {
   return lang === 'da' ? s.replace('.', ',') : s;
 }
 
-// A car field as shown in its input: in the unit it is typed in (percent, kr per half year),
-// and empty for zero so the placeholder shows.
-export function toInputText(field, v, lang) {
-  return v ? inputNumberText(toShown(field, v), lang) : '';
+// A car field as shown in its input: in the unit it is typed in (percent, kr per half year,
+// kWh per 100 km for an electric car's use), and empty for zero so the placeholder shows.
+export function toInputText(field, v, lang, car) {
+  return v ? inputNumberText(toShown(field, v, car), lang) : '';
 }

@@ -187,6 +187,16 @@ test('green tax is typed per half year and stored per month', () => {
   assert.equal(toShown('greenTaxMo', 200), 1200);
   assert.equal(toShown('apr', 0.05), 5);
   assert.equal(toShown('price', 1000), 1000);
+  // an electric car's use: stored as km per kWh, shown as kWh per 100 km
+  const ev = { fuel: 'electric' };
+  assert.equal(toShown('kmPerUnit', 6.25, ev), 16);
+  assert.equal(toShown('kmPerUnit', 6.5, ev), 15.38);
+  assert.equal(fromShown('kmPerUnit', 16, ev), 6.25);
+  assert.equal(toShown('kmPerUnit', fromShown('kmPerUnit', 14.5, ev), ev), 14.5);
+  assert.equal(toShown('kmPerUnit', 0, ev), 0);
+  assert.equal(fromShown('kmPerUnit', 0, ev), 0);
+  // petrol stays km per litre
+  assert.equal(toShown('kmPerUnit', 16, { fuel: 'petrol' }), 16);
 });
 
 test('v4 data moves to v5: fuel and electricity prices are shared settings', () => {

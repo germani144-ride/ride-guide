@@ -81,7 +81,7 @@ const en = {
     oneTimePayment: ['One-time payment', 'kr', 'Paid when the lease starts.'],
     returnFee: ['Return fee', 'kr', 'Charged when you hand the car back.'],
     kmPerUnit: ['Fuel use', 'km per litre'],
-    kmPerUnitEl: ['Energy use', 'km per kWh'],
+    kmPerUnitEl: ['Energy use', 'kWh per 100 km'],
     insuranceMo: ['Insurance', 'kr / month'],
     greenTaxMo: [
       'Green tax',
@@ -180,7 +180,7 @@ const en = {
       "{leaseMo} a month, plus the {oneTime} one-time payment at the start and the {returnFee} return fee at the end, spread over {span} in today's money.",
     energy: '{km} km a year ÷ {kmPerUnit} km per litre × {price} kr per litre (Settings).',
     energyEl:
-      '{km} km a year ÷ {kmPerUnit} km per kWh (your {entered}, with {winter}% extra use in the cold) × {price} kr per kWh: {home} kr at home, and {public} kr at public chargers for {share}% of charging (Settings).',
+      '{km} km a year × {use} kWh per 100 km (your {entered}, with {winter}% extra use in the cold) × {price} kr per kWh: {home} kr at home, and {public} kr at public chargers for {share}% of charging (Settings).',
     energyGrowth: ' Prices rise {g}% a year.',
     asEntered: 'As you entered it: {amount} a month.',
     greenTax: '{half} per half year, as on the bill, ÷ 6.',
@@ -423,7 +423,7 @@ const da = {
     oneTimePayment: ['Engangsydelse', 'kr.', 'Betales ved leasingens start.'],
     returnFee: ['Tilbageleveringsgebyr', 'kr.', 'Betales, når bilen afleveres.'],
     kmPerUnit: ['Forbrug', 'km pr. liter'],
-    kmPerUnitEl: ['Forbrug', 'km pr. kWh'],
+    kmPerUnitEl: ['Forbrug', 'kWh pr. 100 km'],
     insuranceMo: ['Forsikring', 'kr. / md.'],
     greenTaxMo: [
       'Grøn ejerafgift',
@@ -524,7 +524,7 @@ const da = {
       '{leaseMo} om måneden plus engangsydelsen på {oneTime} ved start og tilbageleveringsgebyret på {returnFee} til sidst, fordelt over {span} i dagens kroner.',
     energy: '{km} km om året ÷ {kmPerUnit} km pr. liter × {price} kr. pr. liter (Indstillinger).',
     energyEl:
-      '{km} km om året ÷ {kmPerUnit} km pr. kWh (dine {entered} med {winter} % ekstra forbrug i kulde) × {price} kr. pr. kWh: {home} kr. derhjemme og {public} kr. på offentlige ladere for {share} % af opladningen (Indstillinger).',
+      '{km} km om året × {use} kWh pr. 100 km (dine {entered} med {winter} % ekstra forbrug i kulde) × {price} kr. pr. kWh: {home} kr. derhjemme og {public} kr. på offentlige ladere for {share} % af opladningen (Indstillinger).',
     energyGrowth: ' Priserne stiger {g} % om året.',
     asEntered: 'Som du har angivet: {amount} om måneden.',
     greenTax: '{half} pr. halvår, som på opkrævningen, ÷ 6.',

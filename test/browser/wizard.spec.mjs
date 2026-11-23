@@ -172,3 +172,35 @@ test('repairs right after buying get their own line and count as paid up front',
   await expect(repairs.locator('.legend-why')).toContainText('36,000 kr in repairs paid right after buying');
   await expect(page.locator('.answers')).toContainText('Repairs right after buying36,000 kr');
 });
+
+test("an electric car's use is typed in kWh per 100 km", async ({ page, app }) => {
+  await app.open('#/new');
+  await page.getByRole('button', { name: /Not yet/ }).click();
+  await page.locator('#f-name').fill('Test EV');
+  await page.locator('#f-year').fill('2026');
+  await page.getByRole('radio', { name: 'Electric' }).click();
+  await page.getByRole('button', { name: 'Next' }).click();
+  await page.getByRole('button', { name: /Pay upfront/ }).click();
+  await page.locator('#f-price').fill('250.000');
+  await page.getByRole('button', { name: 'Next' }).click();
+
+  await expect(page.locator('label[for="f-kmPerUnit"]')).toHaveText('Energy use');
+  await expect(page.locator('.field', { has: page.locator('#f-kmPerUnit') }).locator('.unit')).toHaveText(
+    'kWh per 100 km',
+  );
+  await page.locator('#f-kmPerUnit').fill('16');
+  await page.getByRole('button', { name: 'Next' }).click();
+  await page.getByRole('button', { name: 'Next' }).click();
+  await expect(page.getByRole('heading', { name: 'Here is what it costs' })).toBeVisible();
+
+  await page.getByRole('button', { name: 'Save as my car' }).click();
+  await app.saved();
+  expect((await app.state()).cars[0].kmPerUnit).toBe(6.25); // stored as km per kWh
+  await expect(page.locator('.answers')).toContainText('Energy use16 kWh per 100 km');
+  // the explanation counts in the same unit, with the extra use in the cold (16 × 1.1 = 17.6)
+  const energy = page.locator('.legend li', { hasText: 'Fuel / power' });
+  await energy.locator('summary').click();
+  await expect(energy.locator('.legend-why')).toContainText(
+    '10,000 km a year × 17.6 kWh per 100 km (your 16, with 10% extra use in the cold)',
+  );
+});

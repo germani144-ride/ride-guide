@@ -98,7 +98,7 @@ time.
 ### Plate lookup
 
 RideGuide can fill in a car from its Danish license plate: make and model, model year, fuel, and
-fuel use (km per litre, or km per kWh for electric cars, from the register's Wh per km). The
+fuel use (km per litre, or kWh per 100 km for electric cars, from the register's Wh per km). The
 fuel use is the official figure; everyday driving usually uses more, so adjust it if you know
 your own.
 
@@ -169,7 +169,7 @@ All prices are in today's money.
 | Loan interest | interest paid within the span, spread per month. Instalments follow PMT(ÅOP ÷ 12, loan period, loan). |
 | Repairs after buying | as typed, paid when you get the car (in "Paid up front"), spread evenly per month; not part of the car's value or the loan. The return that money could have earned is under money tied up. |
 | Lease | monthly lease + the one-time payment at the start + the return fee at the end, over the lease's own period, discounted. |
-| Fuel / power | km per month ÷ km per unit × price, growing by the yearly price change. Prices are settings shared by every car, by default today's prices (see [Today's prices](#todays-prices)); before the first fetch, petrol 17.50 and diesel 19.50 kr per litre (October 2026), electricity 1.40 kr per kWh at home and 3.50 at public chargers (FDM 2026). Electric: 80% home + 20% public, and 10% extra use in the cold. |
+| Fuel / power | km per month ÷ km per unit × price, growing by the yearly price change. Prices are settings shared by every car, by default today's prices (see [Today's prices](#todays-prices)); before the first fetch, petrol 17.50 and diesel 19.50 kr per litre (October 2026), electricity 1.40 kr per kWh at home and 3.50 at public chargers (FDM 2026). Electric: use is typed in kWh per 100 km (stored as km per kWh: 100 ÷ kWh per 100 km), 80% home + 20% public, and 10% extra use in the cold. |
 | Insurance | as typed, per month (insurers keep charging the same). |
 | Maintenance and repairs | (yearly base + per km × km a year) ÷ 12 × (1 + 8% × age), age up to 15. Petrol 3,000 kr + 0.25 kr/km, diesel 3,500 kr + 0.25 kr/km, electric 2,000 kr + 0.15 kr/km. Skipped when the lease includes service. |
 | Tyres | km × (four tyres 3,500 kr ÷ tyre life 30,000 km; electric 25,000 km), plus two swaps a year (400 kr each) with winter tyres. Skipped when the lease includes tyres. |

@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { lookupPlate, lookupUrl, lookupErrorKey, carFromLookup, applyLookup } from '../src/plate-data.js';
-import { newCar, migrate, emptyState, sanitizePlateKey, STATE_VERSION } from '../src/model.js';
+import { newCar, migrate, emptyState, sanitizePlateKey, STATE_VERSION, toShown } from '../src/model.js';
 
 const answer = (vehicle, environment = {}) => ({
   status: 'ok',
@@ -27,14 +27,15 @@ test('a petrol car: name tidied, model year, fuel and km per litre', () => {
   assert.deepEqual(found, { name: 'Ford Mondeo', year: 2016, fuel: 'petrol', kmPerUnit: 17.2 });
 });
 
-test('an electric car: Wh per km becomes km per kWh', () => {
+test('an electric car: Wh per km is stored as km per kWh (shown as kWh per 100 km)', () => {
   const found = carFromLookup(
     answer(
       { make: 'Tesla', model: 'MODEL Y', model_year: '2022', fuel_type: 'El' },
       { fuel_usage: null, ev_consumption: 160 },
     ),
   );
-  assert.deepEqual(found, { name: 'Tesla Model Y', year: 2022, fuel: 'electric', kmPerUnit: 6.3 });
+  assert.deepEqual(found, { name: 'Tesla Model Y', year: 2022, fuel: 'electric', kmPerUnit: 6.25 });
+  assert.equal(toShown('kmPerUnit', found.kmPerUnit, found), 16);
 });
 
 test('short and numbered names keep their capitals; numbers may come as text', () => {
@@ -42,7 +43,7 @@ test('short and numbered names keep their capitals; numbers may come as text', (
     answer({ make: 'VW', model: 'ID.3', model_year: '2021', fuel_type: 'El' }, { ev_consumption: '155,0' }),
   );
   assert.equal(found.name, 'VW ID.3');
-  assert.equal(found.kmPerUnit, 6.5);
+  assert.equal(toShown('kmPerUnit', found.kmPerUnit, found), 15.5);
   assert.equal(
     carFromLookup(answer({ make: 'BMW', model: 'X1', fuel_type: 'Diesel' }, { fuel_usage: '21,3' }))
       .kmPerUnit,

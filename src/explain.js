@@ -2,7 +2,7 @@
 // numbers, so every amount on screen can be checked. Plain functions, no DOM.
 import { fmt } from './i18n.js';
 import { money, plain } from './format.js';
-import { switchOn } from './model.js';
+import { switchOn, toShown } from './model.js';
 
 // `r`: the result of calculate() (with r.details); `car`: the saved car; `settings`: the settings.
 // Returns { part: sentence } for every part with an amount.
@@ -47,7 +47,8 @@ export function explainParts(r, car, settings, t, lang) {
     fmt(electric ? e.energyEl : e.energy, {
       km: money(d.kmPerYear, lang),
       kmPerUnit: plain(d.kmPerUnit, lang),
-      entered: plain(car.kmPerUnit, lang),
+      entered: plain(toShown('kmPerUnit', car.kmPerUnit, car), lang),
+      use: plain(d.kmPerUnit > 0 ? 100 / d.kmPerUnit : 0, lang), // kWh per 100 km, cold included
       winter: plain(settings.evWinterExtra * 100, lang),
       price: money(d.unitPrice, lang, 2),
       home: money(settings.homeElPrice, lang, 2),

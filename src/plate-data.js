@@ -143,10 +143,11 @@ export function carFromLookup(json) {
   const fuel = fuelFrom(v.fuel_type ?? env.fuel_type);
   if (fuel && FUELS.includes(fuel)) found.fuel = fuel;
 
-  // Petrol and diesel: km per litre. Electric: the register has Wh per km; RideGuide counts km per kWh.
+  // Petrol and diesel: km per litre. Electric: the register has Wh per km; RideGuide stores km per
+  // kWh and shows kWh per 100 km, so 160 Wh/km is stored as 6.25 and shown as 16.
   const whPerKm = toNumber(env.ev_consumption ?? v.ev_consumption);
   const kmPerLitre = toNumber(env.fuel_usage ?? v.fuel_usage);
-  if (found.fuel === 'electric' && whPerKm > 0) found.kmPerUnit = Math.round(10000 / whPerKm) / 10;
+  if (found.fuel === 'electric' && whPerKm > 0) found.kmPerUnit = 100 / (Math.round(whPerKm) / 10);
   else if (found.fuel && found.fuel !== 'electric' && kmPerLitre > 0)
     found.kmPerUnit = Math.round(kmPerLitre * 10) / 10;
 

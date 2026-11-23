@@ -86,7 +86,7 @@ export function answers(car, t, lang, onChange) {
   const val = f => {
     if (f === 'marketValue' && !car.marketValue) return t.result.sameAsPrice;
     const unit = t.fields[labelKey(f, car)][1];
-    const n = toShown(f, car[f]);
+    const n = toShown(f, car[f], car);
     return `${plain(n, lang)}${unit ? ` ${unit}` : ''}`;
   };
   const row = f => el('div', {}, el('dt', {}, t.fields[labelKey(f, car)][0]), el('dd', {}, val(f)));

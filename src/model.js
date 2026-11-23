@@ -106,8 +106,13 @@ export const SETTING_KEYS = Object.keys(DEFAULT_SETTINGS);
 // Shown and typed value = stored value × scale. Percentages, and green tax, which Danish
 // owners know per half year (it is charged every 6 months) but is stored per month.
 export const SHOWN_SCALE = { downPayment: 100, apr: 100, depreciationFactor: 100, greenTaxMo: 6 };
-export const toShown = (field, v) => v * (SHOWN_SCALE[field] ?? 1);
-export const fromShown = (field, v) => v / (SHOWN_SCALE[field] ?? 1);
+// Electric cars' energy use is stored as km per kWh (like km per litre, which the engine divides
+// by) but shown and typed as kWh per 100 km, the figure dealers and spec sheets use.
+const per100 = (field, car) => field === 'kmPerUnit' && car?.fuel === 'electric';
+export const toShown = (field, v, car) =>
+  per100(field, car) ? (v > 0 ? Math.round(10000 / v) / 100 : 0) : v * (SHOWN_SCALE[field] ?? 1);
+export const fromShown = (field, v, car) =>
+  per100(field, car) ? (v > 0 ? 100 / v : 0) : v / (SHOWN_SCALE[field] ?? 1);
 
 export function makeId() {
   if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
