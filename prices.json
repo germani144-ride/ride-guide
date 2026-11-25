@@ -1,10 +1,10 @@
 {
-  "updatedAt": "2026-11-24T14:53:17.224Z",
-  "petrol": 15.79,
-  "diesel": 17.39,
+  "updatedAt": "2026-11-25T14:24:12.977Z",
+  "petrol": 15.69,
+  "diesel": 17.19,
   "spot": {
-    "DK1": 1.6349,
-    "DK2": 1.6946
+    "DK1": 1.6977,
+    "DK2": 1.7577
   },
   "sources": "OK (mobility-prices.ok.dk), Energi Data Service DayAheadPrices, 30-day average"
 }
